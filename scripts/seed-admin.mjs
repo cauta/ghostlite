@@ -3,7 +3,7 @@
 // Uses Node's webcrypto.subtle so the hash format matches what the Workers
 // runtime produces in apps/web/lib/password.ts. This is the critical detail:
 // hash format must be identical on both sides for verifyPassword() to work.
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { webcrypto } from "node:crypto";
 import { parseArgs } from "node:util";
 
@@ -70,9 +70,11 @@ const flatSql = sql.replace(/\n/g, " ");
 
 // Always run from apps/web so wrangler picks up apps/web/wrangler.toml and
 // (for --local) apps/web/.wrangler/state — the same SQLite file `next dev` reads.
+// Use execFileSync (no shell) so `$` chars in the PBKDF2 hash aren't expanded.
 function exec(flag) {
-  execSync(
-    `wrangler d1 execute ${values.db} ${flag} --command "${flatSql}"`,
+  execFileSync(
+    "wrangler",
+    ["d1", "execute", values.db, flag, "--command", flatSql],
     { stdio: "inherit", cwd: "apps/web" },
   );
 }

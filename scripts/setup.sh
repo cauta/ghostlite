@@ -60,8 +60,7 @@ say "D1 database: $DB_NAME"
 DB_ID=$(wrangler d1 list --json 2>/dev/null | jq -r ".[] | select(.name==\"$DB_NAME\") | .uuid" || echo "")
 if [ -z "$DB_ID" ] || [ "$DB_ID" = "null" ]; then
   CREATE_OUT=$(wrangler d1 create "$DB_NAME")
-  DB_ID=$(echo "$CREATE_OUT" | grep -oE '"?database_id"?[: =]+"[a-f0-9-]{36}"' | grep -oE '[a-f0-9-]{36}' | head -1)
-  [ -z "$DB_ID" ] && DB_ID=$(echo "$CREATE_OUT" | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1)
+  DB_ID=$(echo "$CREATE_OUT" | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}' | head -1 || true)
   ok "Created D1: $DB_ID"
 else
   ok "D1 exists: $DB_ID"
@@ -69,7 +68,7 @@ fi
 
 # --- R2 ---
 say "R2 bucket: $R2_NAME"
-if wrangler r2 bucket list 2>/dev/null | grep -q "^${R2_NAME}$\|: ${R2_NAME}$\| ${R2_NAME} "; then
+if wrangler r2 bucket list 2>/dev/null | awk '{for(i=1;i<=NF;i++)print $i}' | grep -qx "$R2_NAME"; then
   ok "R2 exists"
 else
   wrangler r2 bucket create "$R2_NAME" || warn "R2 create returned non-zero (may already exist)"
@@ -81,7 +80,8 @@ say "KV namespace: $KV_NAME"
 KV_ID=$(wrangler kv namespace list 2>/dev/null | jq -r ".[] | select(.title==\"$KV_NAME\") | .id" 2>/dev/null || echo "")
 if [ -z "$KV_ID" ] || [ "$KV_ID" = "null" ]; then
   CREATE_OUT=$(wrangler kv namespace create "$KV_NAME")
-  KV_ID=$(echo "$CREATE_OUT" | grep -oE 'id = "[a-f0-9]+"' | sed 's/id = "//;s/"//')
+  # Wrangler 3.x prints `id = "..."` (TOML); 4.x prints `"id": "..."` (JSON). Accept both.
+  KV_ID=$(echo "$CREATE_OUT" | grep -oE '[a-f0-9]{32}' | head -1 || true)
   ok "Created KV: $KV_ID"
 else
   ok "KV exists: $KV_ID"

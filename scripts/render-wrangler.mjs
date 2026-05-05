@@ -21,7 +21,7 @@ for (const tpl of TEMPLATES) {
   if (!fs.existsSync(tpl)) continue;
   const out = tpl.replace(/\.template$/, "");
   const src = fs.readFileSync(tpl, "utf8");
-  const rendered = src.replace(/\$\{([A-Z_]+)\}/g, (_m, k) => {
+  const rendered = src.replace(/\$\{([A-Z0-9_]+)\}/g, (_m, k) => {
     if (process.env[k] === undefined) {
       throw new Error(`${tpl}: unknown variable \${${k}}`);
     }
