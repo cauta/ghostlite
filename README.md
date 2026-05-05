@@ -41,8 +41,8 @@ to keep in your head.
 git clone <your-fork> ghostlite
 cd ghostlite
 wrangler login            # opens browser, OAuth to your CF account
-pnpm setup                # creates resources, runs migrations, seeds admin
-pnpm deploy               # builds and ships to Cloudflare Pages
+pnpm run setup                # creates resources, runs migrations, seeds admin
+pnpm run deploy               # builds and ships to Cloudflare Pages
 ```
 
 The setup script is idempotent — re-run it and it won't create duplicates.
