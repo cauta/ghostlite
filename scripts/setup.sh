@@ -4,10 +4,13 @@
 # What it does:
 #   1. Verifies prerequisites (node, pnpm, wrangler, jq, openssl)
 #   2. Creates D1 database, R2 bucket, KV namespace if missing
-#   3. Patches wrangler.toml with the resource IDs
-#   4. Applies D1 migrations
-#   5. Sets JWT_SECRET and EMAIL_KEK as Wrangler secrets
-#   6. Seeds the first admin user
+#   3. Patches wrangler.toml + workers/cron/wrangler.toml with the IDs
+#   4. Applies D1 migrations to BOTH remote and local
+#   5. Writes JWT_SECRET / EMAIL_KEK to .env.local for local dev
+#      (reuses existing values if .env.local already has them — never rotates)
+#   6. Seeds the first admin user into BOTH remote and local D1
+#
+# Remote (Pages) deploy + secret push lives in scripts/deploy.sh.
 set -euo pipefail
 
 # --- Output helpers ---
@@ -35,6 +38,7 @@ PROJECT_NAME="${PROJECT_NAME:-ghostlite}"
 DB_NAME="${DB_NAME:-${PROJECT_NAME}-db}"
 R2_NAME="${R2_NAME:-${PROJECT_NAME}-content}"
 KV_NAME="${KV_NAME:-${PROJECT_NAME}-cache}"
+SITE_NAME="${SITE_NAME:-Ghostlite}"
 
 if [ -z "${ADMIN_EMAIL:-}" ]; then
   read -p "Admin email: " ADMIN_EMAIL
@@ -83,43 +87,60 @@ else
   ok "KV exists: $KV_ID"
 fi
 
-# --- Patch wrangler.toml ---
-say "Writing resource IDs to wrangler.toml"
-node scripts/patch-wrangler.mjs --d1 "$DB_ID" --kv "$KV_ID"
-ok "wrangler.toml updated"
+# --- Render wrangler.toml from templates ---
+say "Rendering wrangler.toml from templates"
+PROJECT_NAME="$PROJECT_NAME" DB_NAME="$DB_NAME" R2_NAME="$R2_NAME" KV_NAME="$KV_NAME" \
+  D1_ID="$DB_ID" KV_ID="$KV_ID" SITE_NAME="$SITE_NAME" \
+  node scripts/render-wrangler.mjs
+ok "wrangler.toml files generated"
 
 # --- Migrations ---
-say "Applying D1 migrations"
-wrangler d1 migrations apply "$DB_NAME" --remote
+# Run from apps/web so wrangler resolves a single config + state dir there.
+# `next dev` also runs from apps/web, so it reads the same local SQLite file.
+say "Applying D1 migrations (remote + local)"
+(cd apps/web && wrangler d1 migrations apply "$DB_NAME" --remote)
+(cd apps/web && wrangler d1 migrations apply "$DB_NAME" --local)
 ok "Migrations applied"
 
 # --- Secrets ---
-say "Setting Wrangler secrets"
-JWT_SECRET=$(openssl rand -hex 32)
-EMAIL_KEK=$(openssl rand -base64 32)
+# IMPORTANT: reuse existing secrets if .env.local already has them. Rotating
+# EMAIL_KEK would render any encrypted email API key in D1 unreadable, and
+# rotating JWT_SECRET would invalidate all sessions. Only generate on first run.
+say "Provisioning local secrets"
+JWT_SECRET=""
+EMAIL_KEK=""
+if [ -f .env.local ]; then
+  # shellcheck disable=SC1091
+  set -a; . ./.env.local; set +a
+fi
+if [ -z "${JWT_SECRET:-}" ]; then
+  JWT_SECRET=$(openssl rand -hex 32)
+  ok "Generated new JWT_SECRET"
+else
+  ok "Reusing existing JWT_SECRET from .env.local"
+fi
+if [ -z "${EMAIL_KEK:-}" ]; then
+  EMAIL_KEK=$(openssl rand -base64 32)
+  ok "Generated new EMAIL_KEK"
+else
+  ok "Reusing existing EMAIL_KEK from .env.local"
+fi
 
-# Pages projects need `wrangler pages secret put` once the project exists.
-# First time, the project may not be created yet, so we use plain secret put
-# against the wrangler.toml. After first deploy, you can rotate via dashboard.
-echo "$JWT_SECRET" | wrangler secret put JWT_SECRET 2>/dev/null \
-  || warn "Could not set JWT_SECRET via 'wrangler secret put'; set it via dashboard after first deploy"
-echo "$EMAIL_KEK"  | wrangler secret put EMAIL_KEK 2>/dev/null \
-  || warn "Could not set EMAIL_KEK via 'wrangler secret put'; set it via dashboard after first deploy"
-
-# Save locally too so dev can read them via .env if needed
 cat > .env.local <<EOF
 JWT_SECRET=$JWT_SECRET
 EMAIL_KEK=$EMAIL_KEK
 EOF
-ok "Secrets saved (also written to .env.local for local dev)"
+ok "Secrets written to .env.local (for local dev)"
+warn "Remote (Pages) secrets are pushed by scripts/deploy.sh, not here."
 
 # --- Seed admin ---
 say "Seeding admin user"
 node scripts/seed-admin.mjs \
   --db "$DB_NAME" \
   --email "$ADMIN_EMAIL" \
-  --password "$ADMIN_PASS"
-ok "Admin user created: $ADMIN_EMAIL"
+  --password "$ADMIN_PASS" \
+  --target both
+ok "Admin user created in remote + local D1: $ADMIN_EMAIL"
 
 # --- Done ---
 cat <<EOF
@@ -128,14 +149,14 @@ cat <<EOF
 
   Local dev:    pnpm dev
   Build:        pnpm build
-  Deploy:       pnpm deploy
+  Deploy:       pnpm deploy   (creates Pages project, syncs secrets, deploys)
 
   Sign in to /admin with:
     Email:      $ADMIN_EMAIL
     Password:   (the one you entered)
 
 Next steps:
-  1. Run \`pnpm deploy\` to push to Cloudflare Pages
+  1. Run \`pnpm deploy\` to create the Pages project, push secrets, and deploy
   2. Visit your site at https://$PROJECT_NAME.pages.dev
   3. Configure email under /admin/settings/email
   4. (Paid plan) Deploy the cron worker:

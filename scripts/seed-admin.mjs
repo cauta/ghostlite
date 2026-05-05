@@ -12,11 +12,18 @@ const { values } = parseArgs({
     db:       { type: "string" },
     email:    { type: "string" },
     password: { type: "string" },
+    target:   { type: "string" }, // "remote" | "local" | "both" (default: remote)
   },
 });
 
 if (!values.db || !values.email || !values.password) {
-  console.error("usage: seed-admin.mjs --db <name> --email <email> --password <pwd>");
+  console.error("usage: seed-admin.mjs --db <name> --email <email> --password <pwd> [--target remote|local|both]");
+  process.exit(1);
+}
+
+const target = values.target ?? "remote";
+if (!["remote", "local", "both"].includes(target)) {
+  console.error(`invalid --target: ${target}`);
   process.exit(1);
 }
 
@@ -59,8 +66,22 @@ const sql = `INSERT INTO users (id, email, name, password_hash, role, created_at
              VALUES ('${id}', '${email}', 'Admin', '${hash}', 'admin', ${now})
              ON CONFLICT(email) DO UPDATE SET password_hash = excluded.password_hash, role = 'admin'`;
 
-execSync(`wrangler d1 execute ${values.db} --remote --command "${sql.replace(/\n/g, " ")}"`, {
-  stdio: "inherit",
-});
+const flatSql = sql.replace(/\n/g, " ");
 
-console.log(`  → admin user upserted: ${values.email}`);
+// Always run from apps/web so wrangler picks up apps/web/wrangler.toml and
+// (for --local) apps/web/.wrangler/state — the same SQLite file `next dev` reads.
+function exec(flag) {
+  execSync(
+    `wrangler d1 execute ${values.db} ${flag} --command "${flatSql}"`,
+    { stdio: "inherit", cwd: "apps/web" },
+  );
+}
+
+if (target === "remote" || target === "both") {
+  exec("--remote");
+  console.log(`  → admin upserted (remote): ${values.email}`);
+}
+if (target === "local" || target === "both") {
+  exec("--local");
+  console.log(`  → admin upserted (local):  ${values.email}`);
+}

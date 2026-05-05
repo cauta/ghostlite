@@ -1,4 +1,4 @@
-name = "ghostlite-cron"
+name = "${PROJECT_NAME}-cron"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
@@ -10,5 +10,5 @@ crons = ["*/5 * * * *"]
 # Reuse the same D1 database binding name as the web app
 [[d1_databases]]
 binding = "DB"
-database_name = "ghostlite-db"
-database_id = "REPLACE_ME_D1_ID"
+database_name = "${DB_NAME}"
+database_id = "${D1_ID}"

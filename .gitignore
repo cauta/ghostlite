@@ -2,6 +2,8 @@ node_modules/
 .next/
 .vercel/
 .wrangler/
+# Generated from wrangler.toml.template by scripts/setup.sh — never commit.
+wrangler.toml
 dist/
 .env
 .env.local

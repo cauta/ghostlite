@@ -41,11 +41,51 @@ to keep in your head.
 git clone <your-fork> ghostlite
 cd ghostlite
 wrangler login            # opens browser, OAuth to your CF account
-pnpm run setup                # creates resources, runs migrations, seeds admin
-pnpm run deploy               # builds and ships to Cloudflare Pages
+pnpm run setup            # provisions resources, migrates, seeds admin
+pnpm run deploy           # creates Pages project, pushes secrets, deploys
 ```
 
-The setup script is idempotent — re-run it and it won't create duplicates.
+### What `pnpm setup` does
+
+1. Creates the **D1 database**, **R2 bucket**, and **KV namespace** if they
+   don't already exist on your Cloudflare account.
+2. Writes the resulting IDs into [wrangler.toml](wrangler.toml) and
+   [workers/cron/wrangler.toml](workers/cron/wrangler.toml) (replaces the
+   `REPLACE_ME_*` placeholders).
+3. Applies D1 migrations to **both** the remote database and the local
+   `apps/web/.wrangler/state` SQLite file used by `pnpm dev`.
+4. Generates `JWT_SECRET` and `EMAIL_KEK` and writes them to `.env.local`
+   for local dev. **Reused on re-run** — never rotated, because rotating
+   `EMAIL_KEK` would make any encrypted email API key already in D1
+   unreadable, and rotating `JWT_SECRET` would invalidate every active
+   session.
+5. Seeds the admin user into **both** remote and local D1, so you can log
+   in immediately at `pnpm dev` _or_ on the deployed site.
+
+The setup script is idempotent: re-running it won't create duplicates and
+won't rotate secrets.
+
+### What `pnpm deploy` does
+
+[scripts/deploy.sh](scripts/deploy.sh) handles the remote-only steps:
+
+1. Creates the Cloudflare **Pages project** (`ghostlite`) on first run.
+2. Pushes `JWT_SECRET` and `EMAIL_KEK` from `.env.local` as Pages secrets,
+   **only if they aren't already set** (same no-rotate policy).
+3. Builds the Next.js app and runs `wrangler pages deploy`.
+
+### Tearing it all down
+
+```bash
+pnpm run teardown
+```
+
+[scripts/teardown.sh](scripts/teardown.sh) deletes the D1 database, R2
+bucket (and contents), and KV namespace, then resets the repo to its
+pre-setup state: `wrangler.toml` IDs go back to `REPLACE_ME_*`,
+`.wrangler/` and `apps/web/.wrangler/` caches are removed, and `.env.local`
+is deleted. The Cloudflare Pages project itself must be removed from the
+dashboard manually.
 
 ## Local development
 
@@ -59,8 +99,9 @@ pnpm dev
 pnpm preview
 ```
 
-`pnpm dev` reads `JWT_SECRET` and `EMAIL_KEK` from `.env.local` (the setup
-script wrote these for you).
+`pnpm dev` reads `JWT_SECRET` and `EMAIL_KEK` from `.env.local` and uses
+the local D1 SQLite file at `apps/web/.wrangler/state/`. Both are populated
+by `pnpm setup`.
 
 ## Project layout
 
@@ -87,7 +128,7 @@ apps/web/              # Next.js app (App Router, edge runtime)
   middleware.ts        # Sets x-pathname header
 workers/cron/          # Paid-tier scheduled-post worker (stub)
 migrations/            # D1 SQL migrations
-scripts/               # setup.sh, teardown.sh, seed-admin.mjs
+scripts/               # setup.sh, deploy.sh, teardown.sh, seed-admin.mjs, patch-wrangler.mjs
 wrangler.toml          # Bindings for the web app
 ```
 
