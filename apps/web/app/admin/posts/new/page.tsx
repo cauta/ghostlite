@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ulid } from "ulid";
+import { ulid } from "@/lib/ulid";
 import { requireUser } from "@/lib/auth";
 import { getEnv } from "@/lib/cf";
 import { createPost } from "@/lib/db";

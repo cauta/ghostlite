@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ulid } from "ulid";
+import { ulid } from "@/lib/ulid";
 import { requireUser } from "@/lib/auth";
 import { getEnv } from "@/lib/cf";
 import { putMedia } from "@/lib/storage";
