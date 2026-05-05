@@ -1,0 +1,27 @@
+{
+  "name": "ghostlite",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A Ghost-like CMS running on Cloudflare Pages, D1, R2, and KV",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "preview": "pnpm --filter web preview",
+    "deploy": "pnpm --filter web deploy",
+    "db:migrate": "wrangler d1 migrations apply ghostlite-db --remote",
+    "db:migrate:local": "wrangler d1 migrations apply ghostlite-db --local",
+    "setup": "bash scripts/setup.sh",
+    "teardown": "bash scripts/teardown.sh",
+    "admin:create": "node scripts/seed-admin.mjs",
+    "typecheck": "pnpm --filter web typecheck"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0",
+    "typescript": "^5.5.0",
+    "@cloudflare/workers-types": "^4.20240909.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

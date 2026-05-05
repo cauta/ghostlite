@@ -1,0 +1,275 @@
+// Thin typed query layer over D1.
+//
+// We don't use Drizzle here to keep the install footprint small. Each query
+// is a function. As the surface grows past ~30 queries, switching to Drizzle
+// is a one-PR change because all SQL lives here.
+
+import type { D1Database } from "@cloudflare/workers-types";
+import type { PostFull, PostSummary, Tag } from "@/themes/theme.types";
+
+// ----- Settings -----
+
+export async function getSetting<T = unknown>(db: D1Database, key: string): Promise<T | null> {
+  const row = await db
+    .prepare("SELECT value FROM settings WHERE key = ?")
+    .bind(key)
+    .first<{ value: string }>();
+  return row ? (JSON.parse(row.value) as T) : null;
+}
+
+export async function setSetting(db: D1Database, key: string, value: unknown): Promise<void> {
+  const now = Math.floor(Date.now() / 1000);
+  await db
+    .prepare(
+      `INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    )
+    .bind(key, JSON.stringify(value), now)
+    .run();
+}
+
+export async function getSiteSettings(db: D1Database) {
+  return (
+    (await getSetting<{ title: string; description: string; logo_key: string | null }>(db, "site")) ?? {
+      title: "Ghostlite",
+      description: "",
+      logo_key: null,
+    }
+  );
+}
+
+export async function getActiveThemeName(db: D1Database): Promise<string> {
+  const t = await getSetting<{ active: string; config: Record<string, unknown> }>(db, "theme");
+  return t?.active ?? "default";
+}
+
+// ----- Posts (public) -----
+
+type PostRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  cover_key: string | null;
+  body_key: string;
+  published_at: number;
+  author_id: string;
+  author_name: string;
+  author_avatar: string | null;
+};
+
+const PUBLIC_POST_COLUMNS = `
+  p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at,
+  u.id   as author_id,
+  u.name as author_name,
+  u.avatar_key as author_avatar
+`;
+
+function rowToSummary(r: PostRow): PostSummary {
+  return {
+    id: r.id,
+    slug: r.slug,
+    title: r.title,
+    excerpt: r.excerpt,
+    coverUrl: r.cover_key ? `/api/media/${r.cover_key}` : null,
+    publishedAt: r.published_at,
+    author: {
+      name: r.author_name,
+      avatarUrl: r.author_avatar ? `/api/media/${r.author_avatar}` : null,
+    },
+  };
+}
+
+export async function listPublishedPosts(
+  db: D1Database,
+  opts: { page?: number; perPage?: number } = {},
+): Promise<{ posts: PostSummary[]; total: number; page: number; totalPages: number }> {
+  const page = Math.max(1, opts.page ?? 1);
+  const perPage = Math.max(1, Math.min(50, opts.perPage ?? 10));
+  const offset = (page - 1) * perPage;
+
+  const [postsRes, countRes] = await db.batch([
+    db
+      .prepare(
+        `SELECT ${PUBLIC_POST_COLUMNS}
+         FROM posts p JOIN users u ON u.id = p.author_id
+         WHERE p.status = 'published' AND p.published_at <= unixepoch()
+         ORDER BY p.published_at DESC
+         LIMIT ? OFFSET ?`,
+      )
+      .bind(perPage, offset),
+    db.prepare(
+      `SELECT COUNT(*) as c FROM posts WHERE status = 'published' AND published_at <= unixepoch()`,
+    ),
+  ]);
+
+  const rows = (postsRes.results as unknown as PostRow[]) ?? [];
+  const total = ((countRes.results as unknown as { c: number }[])[0]?.c) ?? 0;
+  return {
+    posts: rows.map(rowToSummary),
+    total,
+    page,
+    totalPages: Math.max(1, Math.ceil(total / perPage)),
+  };
+}
+
+export async function getPublishedPostBySlug(
+  db: D1Database,
+  slug: string,
+): Promise<{ row: PostRow; tags: Tag[] } | null> {
+  const row = await db
+    .prepare(
+      `SELECT ${PUBLIC_POST_COLUMNS}
+       FROM posts p JOIN users u ON u.id = p.author_id
+       WHERE p.slug = ? AND p.status = 'published' AND p.published_at <= unixepoch()`,
+    )
+    .bind(slug)
+    .first<PostRow>();
+  if (!row) return null;
+
+  const tagsRes = await db
+    .prepare(
+      `SELECT t.slug, t.name FROM tags t
+       JOIN post_tags pt ON pt.tag_id = t.id
+       WHERE pt.post_id = ?
+       ORDER BY t.name`,
+    )
+    .bind(row.id)
+    .all<Tag>();
+  const tags = (tagsRes.results as Tag[]) ?? [];
+  return { row, tags };
+}
+
+export function rowToPostFull(r: PostRow, bodyHtml: string, tags: Tag[]): PostFull {
+  return { ...rowToSummary(r), bodyHtml, tags };
+}
+
+export async function listPostsByTag(
+  db: D1Database,
+  tagSlug: string,
+): Promise<{ tag: Tag; posts: PostSummary[] } | null> {
+  const tag = await db
+    .prepare("SELECT slug, name FROM tags WHERE slug = ?")
+    .bind(tagSlug)
+    .first<Tag>();
+  if (!tag) return null;
+
+  const res = await db
+    .prepare(
+      `SELECT ${PUBLIC_POST_COLUMNS}
+       FROM posts p
+       JOIN users u ON u.id = p.author_id
+       JOIN post_tags pt ON pt.post_id = p.id
+       JOIN tags t ON t.id = pt.tag_id
+       WHERE t.slug = ? AND p.status = 'published' AND p.published_at <= unixepoch()
+       ORDER BY p.published_at DESC
+       LIMIT 50`,
+    )
+    .bind(tagSlug)
+    .all<PostRow>();
+  return { tag, posts: ((res.results as PostRow[]) ?? []).map(rowToSummary) };
+}
+
+// ----- Posts (admin) -----
+
+export type AdminPostRow = {
+  id: string;
+  slug: string;
+  title: string;
+  status: "draft" | "scheduled" | "published";
+  author_id: string;
+  author_name: string;
+  updated_at: number;
+  published_at: number | null;
+};
+
+export async function listAllPosts(db: D1Database): Promise<AdminPostRow[]> {
+  const res = await db
+    .prepare(
+      `SELECT p.id, p.slug, p.title, p.status, p.author_id, u.name as author_name,
+              p.updated_at, p.published_at
+       FROM posts p JOIN users u ON u.id = p.author_id
+       ORDER BY p.updated_at DESC LIMIT 100`,
+    )
+    .all<AdminPostRow>();
+  return (res.results as AdminPostRow[]) ?? [];
+}
+
+export type DraftPost = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string; // raw markdown/html (sourced from R2)
+  status: "draft" | "scheduled" | "published";
+  authorId: string;
+  scheduledAt: number | null;
+};
+
+export async function getPostById(
+  db: D1Database,
+  id: string,
+): Promise<{ id: string; slug: string; title: string; excerpt: string | null; body_key: string; status: "draft" | "scheduled" | "published"; author_id: string; scheduled_at: number | null } | null> {
+  return await db
+    .prepare(
+      `SELECT id, slug, title, excerpt, body_key, status, author_id, scheduled_at
+       FROM posts WHERE id = ?`,
+    )
+    .bind(id)
+    .first();
+}
+
+export async function createPost(
+  db: D1Database,
+  args: { id: string; slug: string; title: string; excerpt: string; bodyKey: string; authorId: string },
+): Promise<void> {
+  const now = Math.floor(Date.now() / 1000);
+  await db
+    .prepare(
+      `INSERT INTO posts (id, slug, title, excerpt, body_key, status, author_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
+    )
+    .bind(args.id, args.slug, args.title, args.excerpt, args.bodyKey, args.authorId, now, now)
+    .run();
+}
+
+export async function updatePost(
+  db: D1Database,
+  id: string,
+  patch: Partial<{
+    slug: string;
+    title: string;
+    excerpt: string;
+    status: "draft" | "scheduled" | "published";
+    publishedAt: number | null;
+    scheduledAt: number | null;
+  }>,
+): Promise<void> {
+  const sets: string[] = [];
+  const vals: unknown[] = [];
+  const map: Record<keyof typeof patch, string> = {
+    slug: "slug",
+    title: "title",
+    excerpt: "excerpt",
+    status: "status",
+    publishedAt: "published_at",
+    scheduledAt: "scheduled_at",
+  };
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) continue;
+    sets.push(`${map[k as keyof typeof patch]} = ?`);
+    vals.push(v);
+  }
+  if (sets.length === 0) return;
+  sets.push(`updated_at = ?`);
+  vals.push(Math.floor(Date.now() / 1000));
+  vals.push(id);
+  await db
+    .prepare(`UPDATE posts SET ${sets.join(", ")} WHERE id = ?`)
+    .bind(...vals)
+    .run();
+}
+
+export async function deletePost(db: D1Database, id: string): Promise<void> {
+  await db.prepare("DELETE FROM posts WHERE id = ?").bind(id).run();
+}

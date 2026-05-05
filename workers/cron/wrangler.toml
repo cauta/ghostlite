@@ -1,0 +1,14 @@
+name = "ghostlite-cron"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Runs every 5 minutes. Requires Workers Paid plan for production reliability.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Reuse the same D1 database binding name as the web app
+[[d1_databases]]
+binding = "DB"
+database_name = "ghostlite-db"
+database_id = "REPLACE_ME_D1_ID"
