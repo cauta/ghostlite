@@ -40,7 +40,7 @@ export default function PostEditor({ post }: { post: Post }) {
           body: draft.body,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Save failed");
+      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Save failed");
       setSavedAt(Date.now());
     } catch (e) {
       setError((e as Error).message);
@@ -54,7 +54,7 @@ export default function PostEditor({ post }: { post: Post }) {
     setError(null);
     try {
       const res = await fetch(`/api/posts/${post.id}/publish`, { method: "POST" });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Publish failed");
+      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Publish failed");
       update("status", "published");
       startTransition(() => router.refresh());
     } catch (e) {
@@ -69,7 +69,7 @@ export default function PostEditor({ post }: { post: Post }) {
     setError(null);
     try {
       const res = await fetch(`/api/posts/${post.id}/unpublish`, { method: "POST" });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Unpublish failed");
+      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Unpublish failed");
       update("status", "draft");
       startTransition(() => router.refresh());
     } catch (e) {

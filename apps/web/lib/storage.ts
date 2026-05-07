@@ -32,10 +32,10 @@ export async function deleteObject(r2: R2Bucket, key: string): Promise<void> {
 export async function putMedia(
   r2: R2Bucket,
   key: string,
-  body: ReadableStream | ArrayBuffer | string,
+  body: ReadableStream<Uint8Array> | ArrayBuffer | string,
   contentType: string,
 ): Promise<void> {
-  await r2.put(key, body, { httpMetadata: { contentType } });
+  await r2.put(key, body as Parameters<typeof r2.put>[1], { httpMetadata: { contentType } });
 }
 
 export async function getMedia(r2: R2Bucket, key: string) {

@@ -21,7 +21,7 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings })
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Save failed");
+      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Save failed");
       setMsg({ kind: "ok", text: "Saved." });
     } catch (e) {
       setMsg({ kind: "err", text: (e as Error).message });

@@ -46,7 +46,7 @@ export default function EmailSettingsForm({ initial }: { initial: Initial }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Save failed");
+      if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Save failed");
       setMsg({ kind: "ok", text: "Saved." });
       setApiKey("");
     } catch (e) {
@@ -61,7 +61,7 @@ export default function EmailSettingsForm({ initial }: { initial: Initial }) {
     setMsg(null);
     try {
       const res = await fetch("/api/settings/email/verify", { method: "POST" });
-      const data = await res.json();
+      const data = await res.json() as { ok?: boolean; error?: string };
       if (data.ok) setMsg({ kind: "ok", text: "Credentials verified." });
       else setMsg({ kind: "err", text: data.error ?? "Verification failed" });
     } catch (e) {
@@ -82,7 +82,7 @@ export default function EmailSettingsForm({ initial }: { initial: Initial }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to }),
       });
-      const data = await res.json();
+      const data = await res.json() as { id?: string; error?: string };
       if (res.ok) setMsg({ kind: "ok", text: `Test sent (id: ${data.id ?? "n/a"}).` });
       else setMsg({ kind: "err", text: data.error ?? "Test failed" });
     } catch (e) {
