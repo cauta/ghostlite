@@ -67,7 +67,7 @@ put_if_missing EMAIL_KEK  "$EMAIL_KEK"
 
 # --- 3. Build & deploy ---
 say "Building and deploying"
-pnpm --filter web build
+pnpm --filter web pages:build
 # Run from apps/web so wrangler reads apps/web/wrangler.toml.
 (cd apps/web && wrangler pages deploy .vercel/output/static --project-name "$PROJECT_NAME" --branch "$PRODUCTION_BRANCH")
 
