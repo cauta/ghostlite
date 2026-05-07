@@ -80,10 +80,13 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
 .admin-editor-wrap {
   border: 1px solid var(--a-border);
   border-radius: var(--a-radius);
-  overflow: hidden;
+  overflow: clip; /* clips visually but doesn't block sticky positioning */
   background: var(--a-surface);
 }
 .admin-editor-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -120,31 +123,33 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
   font-family: inherit;
 }
 .admin-editor-tabs button.active { background: var(--a-accent); border-color: var(--a-accent); color: #fff; }
-.admin-editor-body { display: grid; }
+.admin-editor-body { display: grid; height: 600px; }
 .admin-editor-body.write  { grid-template-columns: 1fr; }
 .admin-editor-body.preview { grid-template-columns: 1fr; }
 .admin-editor-body.split  { grid-template-columns: 1fr 1fr; }
 .admin-editor-body textarea {
   width: 100%;
-  min-height: 500px;
+  height: 100%;
   padding: 16px;
   border: none;
   outline: none;
-  resize: vertical;
+  resize: none;
   font-family: ui-monospace, SFMono-Regular, monospace;
   font-size: 13px;
   line-height: 1.65;
   background: var(--a-surface);
   color: var(--a-fg);
   box-sizing: border-box;
+  overflow-y: auto;
 }
 .admin-editor-body.split textarea { border-right: 1px solid var(--a-border); }
 .admin-editor-preview {
   padding: 20px 24px;
-  min-height: 500px;
+  height: 100%;
   overflow-y: auto;
   font-size: 15px;
   line-height: 1.75;
+  box-sizing: border-box;
 }
 .admin-editor-preview h1,.admin-editor-preview h2,.admin-editor-preview h3,
 .admin-editor-preview h4,.admin-editor-preview h5,.admin-editor-preview h6 { margin: 1.2em 0 0.4em; }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { renderMarkdown } from "@/lib/markdown";
@@ -37,6 +37,41 @@ export default function PostEditor({ post }: { post: Post }) {
   });
   const [editorMode, setEditorMode] = useState<EditorMode>("write");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // Sync scroll between editor and preview panes in split mode
+  useEffect(() => {
+    if (editorMode !== "split") return;
+    const ta = textareaRef.current;
+    const pv = previewRef.current;
+    if (!ta || !pv) return;
+
+    let fromEditor = false;
+    let fromPreview = false;
+
+    function onEditorScroll() {
+      if (fromPreview) return;
+      fromEditor = true;
+      const pct = ta!.scrollTop / Math.max(1, ta!.scrollHeight - ta!.clientHeight);
+      pv!.scrollTop = pct * (pv!.scrollHeight - pv!.clientHeight);
+      requestAnimationFrame(() => { fromEditor = false; });
+    }
+
+    function onPreviewScroll() {
+      if (fromEditor) return;
+      fromPreview = true;
+      const pct = pv!.scrollTop / Math.max(1, pv!.scrollHeight - pv!.clientHeight);
+      ta!.scrollTop = pct * (ta!.scrollHeight - ta!.clientHeight);
+      requestAnimationFrame(() => { fromPreview = false; });
+    }
+
+    ta.addEventListener("scroll", onEditorScroll, { passive: true });
+    pv.addEventListener("scroll", onPreviewScroll, { passive: true });
+    return () => {
+      ta.removeEventListener("scroll", onEditorScroll);
+      pv.removeEventListener("scroll", onPreviewScroll);
+    };
+  }, [editorMode]);
 
   function update<K extends keyof Post>(key: K, value: Post[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -257,6 +292,7 @@ export default function PostEditor({ post }: { post: Post }) {
               )}
               {editorMode !== "write" && (
                 <div
+                  ref={previewRef}
                   className="admin-editor-preview"
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(draft.body) || "<p style=\"color:var(--a-fg-muted)\">Nothing to preview yet.</p>" }}
                 />
