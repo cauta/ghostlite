@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import MarkdownEditor from "@/app/admin/components/MarkdownEditor";
 
 type Post = {
   id: string;
@@ -14,6 +15,10 @@ type Post = {
   scheduledAt: number | null;
 };
 
+function slugify(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export default function PostEditor({ post }: { post: Post }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -21,9 +26,26 @@ export default function PostEditor({ post }: { post: Post }) {
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"save" | "publish" | "unpublish" | "delete" | null>(null);
+  // Slug follows title for brand-new posts (title still "Untitled", not yet published).
+  // Once the user saves with a real title, or the post is published, the slug is locked.
+  const [slugTouched, setSlugTouched] = useState(
+    post.status === "published" || post.title !== "Untitled"
+  );
 
   function update<K extends keyof Post>(key: K, value: Post[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
+  }
+
+  function handleTitleChange(value: string) {
+    update("title", value);
+    if (!slugTouched) {
+      update("slug", slugify(value));
+    }
+  }
+
+  function handleSlugChange(value: string) {
+    setSlugTouched(true);
+    update("slug", value.toLowerCase().replace(/[^a-z0-9-]/g, "-"));
   }
 
   async function save() {
@@ -42,6 +64,8 @@ export default function PostEditor({ post }: { post: Post }) {
       });
       if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Save failed");
       setSavedAt(Date.now());
+      // After first save the slug is committed — lock it
+      setSlugTouched(true);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -56,6 +80,7 @@ export default function PostEditor({ post }: { post: Post }) {
       const res = await fetch(`/api/posts/${post.id}/publish`, { method: "POST" });
       if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Publish failed");
       update("status", "published");
+      setSlugTouched(true);
       startTransition(() => router.refresh());
     } catch (e) {
       setError((e as Error).message);
@@ -109,39 +134,44 @@ export default function PostEditor({ post }: { post: Post }) {
 
       {error ? <div className="admin-error" style={{ marginBottom: 16 }}>{error}</div> : null}
 
-      <div className="admin-form">
-        <div>
-          <label htmlFor="title">Title</label>
-          <input
-            id="title"
-            value={draft.title}
-            onChange={(e) => update("title", e.target.value)}
-          />
+      <div className="admin-form" style={{ maxWidth: "none" }}>
+        <div style={{ maxWidth: 560, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <label htmlFor="title">Title</label>
+            <input
+              id="title"
+              value={draft.title}
+              onChange={(e) => handleTitleChange(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="slug">Slug</label>
+            <input
+              id="slug"
+              value={draft.slug}
+              onChange={(e) => handleSlugChange(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="excerpt">Excerpt</label>
+            <input
+              id="excerpt"
+              value={draft.excerpt}
+              onChange={(e) => update("excerpt", e.target.value)}
+              placeholder="One-sentence summary shown on the home page"
+            />
+          </div>
         </div>
+
         <div>
-          <label htmlFor="slug">Slug</label>
-          <input
-            id="slug"
-            value={draft.slug}
-            onChange={(e) => update("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
-          />
-        </div>
-        <div>
-          <label htmlFor="excerpt">Excerpt</label>
-          <input
-            id="excerpt"
-            value={draft.excerpt}
-            onChange={(e) => update("excerpt", e.target.value)}
-            placeholder="One-sentence summary shown on the home page"
-          />
-        </div>
-        <div>
-          <label htmlFor="body">Body (Markdown)</label>
-          <textarea
+          <label style={{ fontSize: 13, color: "var(--a-fg-muted)", display: "block", marginBottom: 6 }}>
+            Body (Markdown)
+          </label>
+          <MarkdownEditor
             id="body"
             value={draft.body}
-            onChange={(e) => update("body", e.target.value)}
-            spellCheck={false}
+            onChange={(v) => update("body", v)}
+            placeholder="Write your post in Markdown…"
           />
         </div>
 

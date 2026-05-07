@@ -14,7 +14,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const link = (href: string, label: string) => {
-    const active = path === href || path.startsWith(href + "/");
+    // Exact match for root-level routes to avoid /admin matching /admin/posts etc.
+    const active = path === href || (href !== "/admin" && path.startsWith(href + "/"));
     return (
       <Link href={href} className={active ? "active" : ""}>
         {label}
