@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getEnv } from "@/lib/cf";
-import { getPostById } from "@/lib/db";
+import { getPostById, getPostTags } from "@/lib/db";
 import { readPostBody } from "@/lib/storage";
 import PostEditor from "./PostEditor";
 
@@ -13,7 +13,10 @@ export default async function EditPost({ params }: { params: { id: string } }) {
   const post = await getPostById(env.DB, params.id);
   if (!post) notFound();
 
-  const body = await readPostBody(env.R2, post.body_key);
+  const [body, tags] = await Promise.all([
+    readPostBody(env.R2, post.body_key),
+    getPostTags(env.DB, post.id),
+  ]);
 
   return (
     <PostEditor
@@ -22,9 +25,12 @@ export default async function EditPost({ params }: { params: { id: string } }) {
         slug: post.slug,
         title: post.title,
         excerpt: post.excerpt ?? "",
+        coverKey: post.cover_key,
         body,
         status: post.status,
         scheduledAt: post.scheduled_at,
+        publishedAt: post.published_at,
+        tags: tags.map((t) => t.name),
       }}
     />
   );

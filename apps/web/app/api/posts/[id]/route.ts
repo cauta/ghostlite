@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { getEnv } from "@/lib/cf";
-import { deletePost, getPostById, updatePost } from "@/lib/db";
-import { deleteObject, postBodyKey, writePostBody } from "@/lib/storage";
+import { deletePost, getPostById, setPostTags, updatePost } from "@/lib/db";
+import { deleteObject, writePostBody } from "@/lib/storage";
 
 export const runtime = "edge";
+
+const RESERVED_SLUGS = new Set(["admin", "api", "tag", "_next", "favicon.ico"]);
+
+type PatchBody = {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  body?: string;
+  coverKey?: string | null;
+  scheduledAt?: number | null;
+  status?: "draft" | "scheduled";
+  tags?: string[];
+};
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await requireUser();
@@ -12,45 +25,58 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const post = await getPostById(env.DB, params.id);
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Authors can only edit their own; admins/editors can edit anything
   if (user.role === "author" && post.author_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  let body: {
-    title?: string;
-    slug?: string;
-    excerpt?: string;
-    body?: string;
-  };
+  let body: PatchBody;
   try {
-    body = await req.json();
+    body = (await req.json()) as PatchBody;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // Reserve top-level paths that would collide with app routes
-  const RESERVED = new Set(["admin", "api", "tag", "_next", "favicon.ico"]);
-  if (typeof body.slug === "string" && RESERVED.has(body.slug)) {
+  if (typeof body.slug === "string" && RESERVED_SLUGS.has(body.slug)) {
     return NextResponse.json(
       { error: `Slug "${body.slug}" is reserved. Pick another.` },
       { status: 400 },
     );
   }
 
-  // Persist body to R2 if changed
+  // Status transitions allowed via PATCH: draft <-> scheduled.
+  // Going to/from published goes through the publish/unpublish endpoints.
+  if (body.status && body.status !== post.status) {
+    if (post.status === "published") {
+      return NextResponse.json(
+        { error: "Use /unpublish to change a published post's status" },
+        { status: 400 },
+      );
+    }
+    if (body.status === "scheduled" && !body.scheduledAt) {
+      return NextResponse.json(
+        { error: "scheduledAt is required to schedule a post" },
+        { status: 400 },
+      );
+    }
+  }
+
   if (typeof body.body === "string") {
     await writePostBody(env.R2, post.body_key, body.body);
   }
 
-  // Then update D1 metadata
   await updatePost(env.DB, params.id, {
     title: body.title,
     slug: body.slug,
     excerpt: body.excerpt,
+    coverKey: body.coverKey,
+    status: body.status,
+    scheduledAt: body.scheduledAt,
   });
 
-  // Bust KV cache for this post
+  if (Array.isArray(body.tags)) {
+    await setPostTags(env.DB, params.id, body.tags);
+  }
+
   if (post.status === "published") {
     await invalidatePostCache(env.KV, params.id);
   }
@@ -68,7 +94,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // R2 first, then D1. If R2 fails we still have a valid (orphaned) row to clean later.
   await deleteObject(env.R2, post.body_key).catch(() => {});
   await deletePost(env.DB, params.id);
   await invalidatePostCache(env.KV, params.id);
@@ -80,7 +105,6 @@ async function invalidatePostCache(
   kv: import("@cloudflare/workers-types").KVNamespace,
   postId: string,
 ) {
-  // Cache keys look like `post-html:<id>:<published_at>`. List + delete.
   const list = await kv.list({ prefix: `post-html:${postId}:` });
   await Promise.all(list.keys.map((k) => kv.delete(k.name))).catch(() => {});
 }
