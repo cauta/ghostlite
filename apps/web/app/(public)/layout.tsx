@@ -1,14 +1,16 @@
 import { loadTheme } from "@/themes/loader";
 import { getEnv } from "@/lib/cf";
 import { getActiveThemeName, getSiteSettings } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const env = getEnv();
-  const [themeName, site] = await Promise.all([
+  const [themeName, site, user] = await Promise.all([
     getActiveThemeName(env.DB),
     getSiteSettings(env.DB),
+    getCurrentUser(),
   ]);
   const theme = await loadTheme(themeName);
 
@@ -19,6 +21,7 @@ export default async function PublicLayout({ children }: { children: React.React
       logoUrl: site.logo_key ? `/api/media/${site.logo_key}` : null,
     },
     theme: { config: {} },
+    user: user ? { name: user.name, role: user.role } : null,
   };
 
   if (theme.Layout) {

@@ -44,8 +44,15 @@
   color: var(--t-fg);
 }
 .theme-logo { max-height: 40px; }
-.theme-nav { display: flex; gap: 20px; }
+.theme-nav { display: flex; gap: 20px; align-items: center; }
 .theme-nav a { color: var(--t-fg-muted); }
+.theme-nav a.theme-dashboard-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--t-fg);
+  color: var(--t-bg);
+  font-size: 14px;
+}
 
 /* Main */
 .theme-main {

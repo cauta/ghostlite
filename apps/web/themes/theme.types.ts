@@ -34,9 +34,15 @@ export type SiteContext = {
   logoUrl: string | null;
 };
 
+export type AuthContext = {
+  name: string;
+  role: "admin" | "editor" | "author";
+} | null;
+
 export type ThemeContext = {
   site: SiteContext;
   theme: { config: Record<string, unknown> };
+  user: AuthContext;
 };
 
 // ----- Page props -----
