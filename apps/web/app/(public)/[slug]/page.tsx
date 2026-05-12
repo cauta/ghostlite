@@ -8,7 +8,6 @@ import {
   rowToPostFull,
 } from "@/lib/db";
 import { readPostBody } from "@/lib/storage";
-import { renderMarkdown } from "@/lib/markdown";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
@@ -26,11 +25,11 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
   ]);
   const theme = await loadTheme(themeName);
 
-  // Cache rendered HTML in KV. Key includes updated_at so an edit busts cache.
+  // Cache the body HTML in KV. Key includes published_at so an edit busts cache.
   const cacheKey = `post-html:${result.row.id}:${result.row.published_at}`;
   let bodyHtml = await env.KV.get(cacheKey);
   if (!bodyHtml) {
-    bodyHtml = renderMarkdown(body);
+    bodyHtml = body;
     // Fire and forget; don't block render on cache write
     env.KV.put(cacheKey, bodyHtml, { expirationTtl: 3600 }).catch(() => {});
   }

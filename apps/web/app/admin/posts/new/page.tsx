@@ -15,7 +15,7 @@ export default async function NewPost() {
   const slug = `untitled-${id.slice(-6)}`;
   const bodyKey = postBodyKey(id);
 
-  await writePostBody(env.R2, bodyKey, "# Untitled\n\nStart writing here…\n");
+  await writePostBody(env.R2, bodyKey, "<p></p>");
   await createPost(env.DB, {
     id,
     slug,

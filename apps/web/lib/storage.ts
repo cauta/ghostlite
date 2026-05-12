@@ -1,7 +1,7 @@
 // R2 helpers.
 //
 // Layout:
-//   posts/<post_id>.md     — post body (markdown source)
+//   posts/<post_id>.html   — post body (HTML from the Tiptap editor)
 //   media/<ulid>.<ext>     — uploaded images, attachments
 
 import type { R2Bucket } from "@cloudflare/workers-types";
@@ -10,7 +10,7 @@ export const POST_BODY_PREFIX = "posts/";
 export const MEDIA_PREFIX = "media/";
 
 export function postBodyKey(postId: string): string {
-  return `${POST_BODY_PREFIX}${postId}.md`;
+  return `${POST_BODY_PREFIX}${postId}.html`;
 }
 
 export async function readPostBody(r2: R2Bucket, key: string): Promise<string> {
@@ -21,7 +21,7 @@ export async function readPostBody(r2: R2Bucket, key: string): Promise<string> {
 
 export async function writePostBody(r2: R2Bucket, key: string, body: string): Promise<void> {
   await r2.put(key, body, {
-    httpMetadata: { contentType: "text/markdown; charset=utf-8" },
+    httpMetadata: { contentType: "text/html; charset=utf-8" },
   });
 }
 
