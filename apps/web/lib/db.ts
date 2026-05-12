@@ -209,14 +209,88 @@ export type DraftPost = {
 export async function getPostById(
   db: D1Database,
   id: string,
-): Promise<{ id: string; slug: string; title: string; excerpt: string | null; body_key: string; status: "draft" | "scheduled" | "published"; author_id: string; scheduled_at: number | null } | null> {
+): Promise<{
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  cover_key: string | null;
+  body_key: string;
+  status: "draft" | "scheduled" | "published";
+  author_id: string;
+  scheduled_at: number | null;
+  published_at: number | null;
+} | null> {
   return await db
     .prepare(
-      `SELECT id, slug, title, excerpt, body_key, status, author_id, scheduled_at
+      `SELECT id, slug, title, excerpt, cover_key, body_key, status, author_id, scheduled_at, published_at
        FROM posts WHERE id = ?`,
     )
     .bind(id)
     .first();
+}
+
+// ----- Tags (admin) -----
+
+export async function listAllTags(db: D1Database): Promise<Tag[]> {
+  const res = await db
+    .prepare("SELECT slug, name FROM tags ORDER BY name")
+    .all<Tag>();
+  return (res.results as Tag[]) ?? [];
+}
+
+export async function getPostTags(db: D1Database, postId: string): Promise<Tag[]> {
+  const res = await db
+    .prepare(
+      `SELECT t.slug, t.name FROM tags t
+       JOIN post_tags pt ON pt.tag_id = t.id
+       WHERE pt.post_id = ? ORDER BY t.name`,
+    )
+    .bind(postId)
+    .all<Tag>();
+  return (res.results as Tag[]) ?? [];
+}
+
+function slugify(s: string): string {
+  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+// Replaces the tag set for a post. Creates missing tags on the fly.
+// `names` is the user-typed list of tag display names.
+export async function setPostTags(
+  db: D1Database,
+  postId: string,
+  names: string[],
+): Promise<void> {
+  const cleaned = Array.from(new Set(names.map((n) => n.trim()).filter(Boolean)));
+  const tagIds: string[] = [];
+
+  for (const name of cleaned) {
+    const slug = slugify(name);
+    if (!slug) continue;
+    const existing = await db
+      .prepare("SELECT id FROM tags WHERE slug = ?")
+      .bind(slug)
+      .first<{ id: string }>();
+    if (existing) {
+      tagIds.push(existing.id);
+    } else {
+      const id = crypto.randomUUID().replace(/-/g, "");
+      await db
+        .prepare("INSERT INTO tags (id, slug, name) VALUES (?, ?, ?)")
+        .bind(id, slug, name)
+        .run();
+      tagIds.push(id);
+    }
+  }
+
+  await db.prepare("DELETE FROM post_tags WHERE post_id = ?").bind(postId).run();
+  for (const tagId of tagIds) {
+    await db
+      .prepare("INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)")
+      .bind(postId, tagId)
+      .run();
+  }
 }
 
 export async function createPost(
@@ -240,6 +314,7 @@ export async function updatePost(
     slug: string;
     title: string;
     excerpt: string;
+    coverKey: string | null;
     status: "draft" | "scheduled" | "published";
     publishedAt: number | null;
     scheduledAt: number | null;
@@ -251,6 +326,7 @@ export async function updatePost(
     slug: "slug",
     title: "title",
     excerpt: "excerpt",
+    coverKey: "cover_key",
     status: "status",
     publishedAt: "published_at",
     scheduledAt: "scheduled_at",

@@ -11,18 +11,31 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@cloudflare/next-on-pages": "^1.13.7",
+    "@tiptap/core": "^3.23.1",
+    "@tiptap/extension-document": "^3.23.1",
+    "@tiptap/extension-hard-break": "^3.23.1",
+    "@tiptap/extension-list": "^3.23.1",
+    "@tiptap/extension-paragraph": "^3.23.1",
+    "@tiptap/extension-text": "^3.23.1",
+    "@tiptap/extension-text-style": "^3.23.1",
+    "@tiptap/extensions": "^3.23.1",
+    "@tiptap/pm": "^3.23.1",
+    "@tiptap/react": "^3.23.1",
+    "highlight.js": "^11.11.1",
+    "jose": "^5.9.0",
+    "lowlight": "^3.3.0",
     "next": "^14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "jose": "^5.9.0",
-    "ulid": "^2.3.0",
-    "@cloudflare/next-on-pages": "^1.13.7"
+    "reactjs-tiptap-editor": "^1.0.22",
+    "ulid": "^2.3.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
     "@types/node": "^20.16.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
-    "@cloudflare/workers-types": "^4.20240909.0",
     "typescript": "^5.5.0",
     "vercel": "^37.0.0"
   }
