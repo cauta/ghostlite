@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { LayoutProps } from "../../theme.types";
 
-export default function Layout({ site, children }: LayoutProps) {
+export default function Layout({ site, user, children }: LayoutProps) {
   return (
     <div className="theme-default">
       <header className="theme-header">
@@ -16,6 +16,11 @@ export default function Layout({ site, children }: LayoutProps) {
           <nav className="theme-nav">
             <Link href="/">Home</Link>
             <Link href="/about">About</Link>
+            {user ? (
+              <Link href="/admin" className="theme-dashboard-btn">
+                Go to Dashboard
+              </Link>
+            ) : null}
           </nav>
         </div>
       </header>

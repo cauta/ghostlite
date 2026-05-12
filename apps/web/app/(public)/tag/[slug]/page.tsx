@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { loadTheme } from "@/themes/loader";
 import { getEnv } from "@/lib/cf";
 import { getActiveThemeName, getSiteSettings, listPostsByTag } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
 
@@ -10,9 +11,10 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
   const data = await listPostsByTag(env.DB, params.slug);
   if (!data) notFound();
 
-  const [themeName, site] = await Promise.all([
+  const [themeName, site, user] = await Promise.all([
     getActiveThemeName(env.DB),
     getSiteSettings(env.DB),
+    getCurrentUser(),
   ]);
   const theme = await loadTheme(themeName);
 
@@ -23,6 +25,7 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
       logoUrl: site.logo_key ? `/api/media/${site.logo_key}` : null,
     },
     theme: { config: {} },
+    user: user ? { name: user.name, role: user.role } : null,
   };
 
   return <theme.pages.Tag {...ctx} tag={data.tag} posts={data.posts} />;
