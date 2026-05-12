@@ -31,6 +31,14 @@ function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+// The salt is the last 6 chars of the post's ULID — random, permanent, and
+// requires no extra storage. The auto-slug is always `slugify(title)-salt`,
+// or just `-salt` when the title slugifies to empty.
+function autoSlugFor(title: string, salt: string): string {
+  const base = slugify(title);
+  return base ? `${base}-${salt}` : `-${salt}`;
+}
+
 // Local datetime input <-> epoch seconds. The <input type="datetime-local">
 // emits "YYYY-MM-DDTHH:mm" in local time.
 function epochToLocalInput(epoch: number | null): string {
@@ -56,8 +64,11 @@ export default function PostEditor({ post }: { post: Post }) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleAt, setScheduleAt] = useState(epochToLocalInput(post.scheduledAt));
   const [tagInput, setTagInput] = useState("");
+  const salt = post.id.slice(-6);
+  // The slug is "untouched" (auto-tracks the title) only when it still matches
+  // the auto-generated pattern. Any prior manual edit shows up as a mismatch.
   const [slugTouched, setSlugTouched] = useState(
-    post.status !== "draft" || post.title !== "Untitled",
+    post.slug !== autoSlugFor(post.title, salt),
   );
 
   // Keep latest draft accessible to the autosave timer without re-binding it
@@ -73,7 +84,7 @@ export default function PostEditor({ post }: { post: Post }) {
 
   function handleTitleChange(value: string) {
     update("title", value);
-    if (!slugTouched) update("slug", slugify(value));
+    if (!slugTouched) update("slug", autoSlugFor(value, salt));
   }
 
   function handleSlugChange(value: string) {
@@ -108,7 +119,6 @@ export default function PostEditor({ post }: { post: Post }) {
           tags: d.tags,
         });
         setSavedAt(Date.now());
-        setSlugTouched(true);
       } catch (e) {
         setError((e as Error).message);
       } finally {
