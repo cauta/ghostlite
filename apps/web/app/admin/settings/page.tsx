@@ -17,6 +17,11 @@ export default async function SettingsHome() {
           desc="Title, description, and logo shown on the public blog."
         />
         <SectionCard
+          href="/admin/settings/theme"
+          title="Theme"
+          desc="Choose the reading theme for your public blog."
+        />
+        <SectionCard
           href="/admin/settings/email"
           title="Email"
           desc="Configure your email provider for invites, notifications, and password resets."

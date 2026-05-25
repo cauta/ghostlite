@@ -7,6 +7,9 @@ import Layout from "./components/Layout";
 const theme: Theme = {
   manifest: {
     name: "default",
+    label: "Default",
+    description: "A clean, fast reading theme with light and dark modes.",
+    tier: "standard",
     version: "0.1.0",
     apiVersion: 1,
     settings: {
