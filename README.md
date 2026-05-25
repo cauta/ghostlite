@@ -11,6 +11,10 @@ to keep in your head.
 
 ## What works in v1
 
+
+![Ghostlite screenshot](images/home.png)
+
+
 - Public blog: list, single post (Markdown rendered), tag pages
 - Admin: login, dashboard, post CRUD, publish/unpublish, settings
 - Media uploads to R2, served via `/api/media/...`
