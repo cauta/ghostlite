@@ -11,6 +11,7 @@ import type { Theme, ThemeManifest } from "./theme.types";
 const REGISTRY: Record<string, () => Promise<{ default: Theme }>> = {
   default: () => import("./default"),
   editorial: () => import("./editorial"),
+  solo: () => import("./solo"),
 };
 
 export async function loadTheme(name: string): Promise<Theme> {
