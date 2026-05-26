@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "../themes/default/styles.css";
+import "../themes/editorial/styles.css";
 import "./admin/admin.css";
 
 export const runtime = "edge";

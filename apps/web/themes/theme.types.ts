@@ -76,7 +76,14 @@ export type ThemeSettingsSchema = Record<
 >;
 
 export type ThemeManifest = {
+  /** Stable identifier — matches the folder name and the loader registry key. */
   name: string;
+  /** Human-friendly name shown to authors in the admin theme picker. */
+  label: string;
+  /** One-line summary shown beside the label in the theme picker. */
+  description: string;
+  /** Quality tier. "premium" themes are richer, more designed layouts. */
+  tier: "standard" | "premium";
   version: string;
   /** Bumped when the contract changes incompatibly. v1 right now. */
   apiVersion: 1;

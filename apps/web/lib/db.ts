@@ -38,9 +38,15 @@ export async function getSiteSettings(db: D1Database) {
   );
 }
 
+export type ThemeSettings = { active: string; config: Record<string, unknown> };
+
+export async function getThemeSettings(db: D1Database): Promise<ThemeSettings> {
+  const t = await getSetting<ThemeSettings>(db, "theme");
+  return { active: t?.active ?? "default", config: t?.config ?? {} };
+}
+
 export async function getActiveThemeName(db: D1Database): Promise<string> {
-  const t = await getSetting<{ active: string; config: Record<string, unknown> }>(db, "theme");
-  return t?.active ?? "default";
+  return (await getThemeSettings(db)).active;
 }
 
 // ----- Posts (public) -----
