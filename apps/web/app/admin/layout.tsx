@@ -30,6 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <nav>
           {link("/admin", "Dashboard")}
           {link("/admin/posts", "Posts")}
+          {link("/admin/tags", "Tags")}
           {link("/admin/settings", "Settings")}
           {link("/", "View site →")}
         </nav>
