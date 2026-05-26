@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
 import { Document } from "@tiptap/extension-document";
 import { HardBreak } from "@tiptap/extension-hard-break";
 import { ListItem } from "@tiptap/extension-list";
@@ -115,27 +116,52 @@ const extensions = [
   SlashCommand,
 ];
 
+interface EditorStats {
+  words: number;
+  chars: number;
+}
+
 interface Props {
   value: string;
   onChange: (value: string) => void;
 }
 
+/** Count words and characters from the editor's plain text. */
+function getStats(editor: Editor): EditorStats {
+  const text = editor.getText();
+  const trimmed = text.trim();
+  const words = trimmed ? trimmed.split(/\s+/).length : 0;
+  const chars = trimmed.length;
+  return { words, chars };
+}
+
+/** Ghost uses ~275 wpm as average reading speed. Minimum 1 min. */
+function readingTime(words: number): string {
+  const mins = Math.max(1, Math.round(words / 275));
+  return `${mins} min read`;
+}
+
 export default function TiptapEditor({ value, onChange }: Props) {
+  const [stats, setStats] = useState<EditorStats>({ words: 0, chars: 0 });
+
   const editor = useEditor({
     extensions,
     content: value,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
+      setStats(getStats(editor));
     },
   });
 
-  // Keep editor in sync when the parent replaces the value (e.g. switching posts).
+  // Keep editor in sync when the parent replaces the value (e.g. switching posts),
+  // and compute initial stats once the editor is ready.
   useEffect(() => {
     if (!editor) return;
     if (editor.getHTML() !== value) {
       editor.commands.setContent(value, { emitUpdate: false });
     }
+    setStats(getStats(editor));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
@@ -188,6 +214,19 @@ export default function TiptapEditor({ value, onChange }: Props) {
         <RichTextBubbleCodeBlock />
 
         <SlashCommandList />
+
+        {/* Ghost-style status bar: word count, reading time, character count */}
+        <div className="tiptap-statusbar">
+          <span className="tiptap-statusbar-stat">
+            {stats.words.toLocaleString()} {stats.words === 1 ? "word" : "words"}
+          </span>
+          <span className="tiptap-statusbar-sep" aria-hidden>·</span>
+          <span className="tiptap-statusbar-stat">{readingTime(stats.words)}</span>
+          <span className="tiptap-statusbar-sep" aria-hidden>·</span>
+          <span className="tiptap-statusbar-stat">
+            {stats.chars.toLocaleString()} {stats.chars === 1 ? "char" : "chars"}
+          </span>
+        </div>
       </div>
     </RichTextProvider>
   );
