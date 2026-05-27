@@ -148,20 +148,22 @@ export default function TiptapEditor({ value, onChange }: Props) {
     extensions,
     content: value,
     immediatelyRender: false,
+    onCreate: ({ editor }) => {
+      setStats(getStats(editor));
+    },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
       setStats(getStats(editor));
     },
   });
 
-  // Keep editor in sync when the parent replaces the value (e.g. switching posts),
-  // and compute initial stats once the editor is ready.
+  // Keep editor in sync when the parent replaces the value (e.g. switching posts).
+  // emitUpdate: true lets onUpdate fire, which handles the stats recalculation.
   useEffect(() => {
     if (!editor) return;
     if (editor.getHTML() !== value) {
-      editor.commands.setContent(value, { emitUpdate: false });
+      editor.commands.setContent(value, { emitUpdate: true });
     }
-    setStats(getStats(editor));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
