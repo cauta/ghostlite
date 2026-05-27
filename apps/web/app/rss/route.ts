@@ -72,7 +72,7 @@ function escapeXml(str: string): string {
     .replace(/'/g, "&apos;");
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   const env = getEnv();
 
   // Try KV cache first
@@ -93,8 +93,9 @@ export async function GET(_req: NextRequest) {
     getRecentPublishedPosts(env.DB, 15),
   ]);
 
-  // Determine site URL from settings or fall back to a safe default
-  const siteUrl = ((site as unknown as { url?: string }).url ?? "").replace(/\/$/, "") || "https://example.com";
+  // Derive site URL from the request (same pattern as sitemap.xml)
+  const reqUrl = new URL(req.url);
+  const siteUrl = `${reqUrl.protocol}//${reqUrl.host}`;
 
   // Fetch post bodies from R2
   const items = await Promise.all(
