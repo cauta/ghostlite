@@ -176,6 +176,37 @@ export async function listPostsByTag(
   return { tag, posts: ((res.results as PostRow[]) ?? []).map(rowToSummary) };
 }
 
+// ----- RSS feed -----
+
+export type RssPostRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  cover_key: string | null;
+  body_key: string;
+  published_at: number;
+  author_name: string;
+};
+
+export async function getRecentPublishedPosts(
+  db: D1Database,
+  limit = 15,
+): Promise<RssPostRow[]> {
+  const res = await db
+    .prepare(
+      `SELECT p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at,
+              u.name as author_name
+       FROM posts p JOIN users u ON u.id = p.author_id
+       WHERE p.status = 'published' AND p.published_at <= unixepoch()
+       ORDER BY p.published_at DESC
+       LIMIT ?`,
+    )
+    .bind(limit)
+    .all<RssPostRow>();
+  return (res.results as RssPostRow[]) ?? [];
+}
+
 // ----- Posts (admin) -----
 
 export type AdminPostRow = {

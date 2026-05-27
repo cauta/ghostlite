@@ -81,6 +81,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     await invalidatePostCache(env.KV, params.id);
     // Also bust the sitemap cache (slug may have changed)
     env.KV.delete("sitemap-xml").catch(() => {});
+    // Also bust the RSS feed cache so edits are reflected
+    env.KV.delete("rss:feed").catch(() => {});
   }
 
   return NextResponse.json({ ok: true });
