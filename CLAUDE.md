@@ -15,6 +15,7 @@ pnpm dev            # Next.js dev server with local D1/R2/KV emulation
 pnpm preview        # Full Workers runtime locally (slower, catches Workers-specific bugs)
 pnpm build          # next build + @cloudflare/next-on-pages
 pnpm typecheck      # tsc --noEmit (run before committing)
+pnpm lint           # eslint (run before committing)
 pnpm deploy         # build + wrangler pages deploy (requires wrangler login)
 
 # Database
@@ -27,7 +28,7 @@ pnpm teardown       # delete all CF resources, reset repo to pre-setup state
 pnpm admin:create   # re-seed admin user (node scripts/seed-admin.mjs)
 ```
 
-There is no test suite yet — `pnpm typecheck` is the only automated check.
+There is no test suite yet — `pnpm typecheck` and `pnpm lint` are the automated checks. CI runs lint, typecheck, and build on every PR.
 
 ## Architecture
 
