@@ -79,6 +79,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   if (post.status === "published") {
     await invalidatePostCache(env.KV, params.id);
+    // Also bust the sitemap cache (slug may have changed)
+    env.KV.delete("sitemap-xml").catch(() => {});
   }
 
   return NextResponse.json({ ok: true });

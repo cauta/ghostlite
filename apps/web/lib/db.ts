@@ -386,3 +386,31 @@ export async function updatePost(
 export async function deletePost(db: D1Database, id: string): Promise<void> {
   await db.prepare("DELETE FROM posts WHERE id = ?").bind(id).run();
 }
+
+// ----- Sitemap helpers -----
+
+export type PostSlugRow = { slug: string; updated_at: number };
+
+/** All published post slugs + their last-modified timestamp for sitemap.xml. */
+export async function getAllPublishedPostSlugs(db: D1Database): Promise<PostSlugRow[]> {
+  const res = await db
+    .prepare(
+      `SELECT slug, updated_at FROM posts WHERE status = 'published' AND published_at <= unixepoch()
+       ORDER BY published_at DESC`,
+    )
+    .all<PostSlugRow>();
+  return (res.results as PostSlugRow[]) ?? [];
+}
+
+/** Slugs of tags that have at least one published post — for sitemap.xml. */
+export async function getAllTagsWithPublishedPosts(db: D1Database): Promise<string[]> {
+  const res = await db
+    .prepare(
+      `SELECT DISTINCT t.slug FROM tags t
+       INNER JOIN post_tags pt ON pt.tag_id = t.id
+       INNER JOIN posts p ON pt.post_id = p.id
+       WHERE p.status = 'published' AND p.published_at <= unixepoch()`,
+    )
+    .all<{ slug: string }>();
+  return ((res.results as { slug: string }[]) ?? []).map((r) => r.slug);
+}
