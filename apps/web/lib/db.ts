@@ -245,6 +245,37 @@ export async function listAllTags(db: D1Database): Promise<Tag[]> {
   return (res.results as Tag[]) ?? [];
 }
 
+export type TagWithCount = { id: string; slug: string; name: string; postCount: number };
+
+/** List every tag with the number of posts that reference it. */
+export async function listTagsWithPostCount(db: D1Database): Promise<TagWithCount[]> {
+  const res = await db
+    .prepare(
+      `SELECT t.id, t.slug, t.name, COUNT(pt.post_id) as postCount
+       FROM tags t LEFT JOIN post_tags pt ON pt.tag_id = t.id
+       GROUP BY t.id ORDER BY t.name`,
+    )
+    .all<TagWithCount>();
+  return (res.results as TagWithCount[]) ?? [];
+}
+
+/** Rename a tag — updates both the display name and the URL slug. */
+export async function updateTag(
+  db: D1Database,
+  id: string,
+  data: { name: string; slug: string },
+): Promise<void> {
+  await db
+    .prepare("UPDATE tags SET name = ?, slug = ? WHERE id = ?")
+    .bind(data.name, data.slug, id)
+    .run();
+}
+
+/** Delete a tag by ID. post_tags rows are removed via ON DELETE CASCADE. */
+export async function deleteTag(db: D1Database, id: string): Promise<void> {
+  await db.prepare("DELETE FROM tags WHERE id = ?").bind(id).run();
+}
+
 export async function getPostTags(db: D1Database, postId: string): Promise<Tag[]> {
   const res = await db
     .prepare(

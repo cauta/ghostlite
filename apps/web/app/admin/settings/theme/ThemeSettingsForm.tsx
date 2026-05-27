@@ -10,8 +10,9 @@ const PREVIEWS: Record<
   string,
   { paper: string; ink: string; accent: string; serif: boolean }
 > = {
-  default: { paper: "#ffffff", ink: "#1d1d1f", accent: "#0f6e56", serif: false },
-  editorial: { paper: "#fbf9f4", ink: "#1c1815", accent: "#9a3412", serif: true },
+  default:   { paper: "#ffffff", ink: "#1d1d1f", accent: "#0f6e56", serif: false },
+  editorial: { paper: "#fbf9f4", ink: "#1c1815", accent: "#9a3412", serif: true  },
+  solo:      { paper: "#f9f9f9", ink: "#111111", accent: "#4f46e5", serif: true  },
 };
 const FALLBACK_PREVIEW = { paper: "#ffffff", ink: "#1d1d1f", accent: "#2563eb", serif: false };
 
