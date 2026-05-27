@@ -13,7 +13,8 @@
     "setup": "bash scripts/setup.sh",
     "teardown": "bash scripts/teardown.sh",
     "admin:create": "node scripts/seed-admin.mjs",
-    "typecheck": "pnpm --filter web typecheck"
+    "typecheck": "pnpm --filter web typecheck",
+    "lint": "pnpm --filter web lint"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240909.0",

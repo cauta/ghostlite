@@ -8,7 +8,8 @@
     "pages:build": "npx @cloudflare/next-on-pages@latest",
     "preview": "pnpm pages:build && wrangler pages dev .vercel/output/static --d1 DB --r2 R2 --kv KV --compatibility-flag nodejs_compat",
     "deploy": "pnpm pages:build && wrangler pages deploy .vercel/output/static --project-name ghostlite",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@cloudflare/next-on-pages": "^1.13.7",
@@ -33,10 +34,15 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240909.0",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^20.16.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
+    "eslint": "^10.4.0",
+    "eslint-plugin-next": "npm:@next/eslint-plugin-next@^16.2.6",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "typescript": "^5.5.0",
+    "typescript-eslint": "^8.60.0",
     "vercel": "^37.0.0"
   }
 }
