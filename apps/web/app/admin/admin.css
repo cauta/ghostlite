@@ -328,6 +328,7 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
   overflow-y: auto;
   position: sticky;
   top: 53px;
+  z-index: 11;
   align-self: start;
   max-height: calc(100vh - 53px);
 }
