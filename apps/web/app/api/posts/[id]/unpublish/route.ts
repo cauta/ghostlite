@@ -20,5 +20,8 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     publishedAt: null,
   });
 
+  // Bust the sitemap KV cache so unpublished posts are removed promptly
+  env.KV.delete("sitemap-xml").catch(() => {});
+
   return NextResponse.json({ ok: true });
 }

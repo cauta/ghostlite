@@ -21,5 +21,8 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     scheduledAt: null,
   });
 
+  // Bust the sitemap KV cache so the new post appears immediately
+  env.KV.delete("sitemap-xml").catch(() => {});
+
   return NextResponse.json({ ok: true });
 }
