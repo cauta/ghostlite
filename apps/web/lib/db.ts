@@ -49,6 +49,10 @@ export async function getActiveThemeName(db: D1Database): Promise<string> {
   return (await getThemeSettings(db)).active;
 }
 
+export async function getRobotsTxt(db: D1Database): Promise<string | null> {
+  return getSetting<string>(db, "robots");
+}
+
 // ----- Posts (public) -----
 
 type PostRow = {
