@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ThemeManifest } from "@/themes/theme.types";
 
 // Palette + font hints used only to render the mini preview mockups below.
@@ -27,6 +27,12 @@ export default function ThemeSettingsForm({
   const [savedTheme, setSavedTheme] = useState(active);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (msg?.kind !== "ok") return;
+    const t = setTimeout(() => setMsg(null), 3000);
+    return () => clearTimeout(t);
+  }, [msg]);
 
   const dirty = selected !== savedTheme;
 
