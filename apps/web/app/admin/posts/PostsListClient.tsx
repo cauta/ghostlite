@@ -45,9 +45,7 @@ export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
             onClick={() => setTab(t)}
           >
             {TAB_LABELS[t]}
-            {counts[t] > 0 && (
-              <span className="posts-filter-count">{counts[t]}</span>
-            )}
+            <span className="posts-filter-count">{counts[t]}</span>
           </button>
         ))}
       </div>
@@ -100,7 +98,7 @@ export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
                   })}
                 </td>
                 <td>
-                  {p.status === "published" && (
+                  {p.status === "published" ? (
                     <a
                       href={`/${p.slug}`}
                       target="_blank"
@@ -110,6 +108,14 @@ export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
                     >
                       View →
                     </a>
+                  ) : (
+                    <Link
+                      href={`/admin/posts/${p.id}`}
+                      className="posts-view-link"
+                      title="Edit post"
+                    >
+                      Edit →
+                    </Link>
                   )}
                 </td>
               </tr>
