@@ -1,19 +1,15 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { loadTheme } from "@/themes/loader";
-import { getEnv } from "@/lib/cf";
+import { getEnv, getOrigin } from "@/lib/cf";
 import { getActiveThemeName, getSiteSettings, listPostsByTag } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
 
-function getOrigin(): string {
-  const headersList = headers();
-  const host = headersList.get("host") ?? "localhost:3000";
-  const proto = headersList.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
+const getSiteSettingsCached = cache(getSiteSettings);
+const listPostsByTagCached = cache(listPostsByTag);
 
 export async function generateMetadata({
   params,
@@ -22,8 +18,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const env = getEnv();
   const [data, site] = await Promise.all([
-    listPostsByTag(env.DB, params.slug),
-    getSiteSettings(env.DB),
+    listPostsByTagCached(env.DB, params.slug),
+    getSiteSettingsCached(env.DB),
   ]);
   if (!data) return {};
 
@@ -54,12 +50,12 @@ export async function generateMetadata({
 
 export default async function TagPage({ params }: { params: { slug: string } }) {
   const env = getEnv();
-  const data = await listPostsByTag(env.DB, params.slug);
+  const data = await listPostsByTagCached(env.DB, params.slug);
   if (!data) notFound();
 
   const [themeName, site, user] = await Promise.all([
     getActiveThemeName(env.DB),
-    getSiteSettings(env.DB),
+    getSiteSettingsCached(env.DB),
     getCurrentUser(),
   ]);
   const theme = await loadTheme(themeName);

@@ -1,8 +1,8 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { loadTheme } from "@/themes/loader";
-import { getEnv } from "@/lib/cf";
+import { getEnv, getOrigin } from "@/lib/cf";
 import {
   getActiveThemeName,
   getPublishedPostBySlug,
@@ -14,13 +14,8 @@ import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
 
-/** Derive the canonical origin from request headers — works on both CF Pages and local dev. */
-function getOrigin(): string {
-  const headersList = headers();
-  const host = headersList.get("host") ?? "localhost:3000";
-  const proto = headersList.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
+const getPublishedPostBySlugCached = cache(getPublishedPostBySlug);
+const getSiteSettingsCached = cache(getSiteSettings);
 
 export async function generateMetadata({
   params,
@@ -29,8 +24,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const env = getEnv();
   const [result, site] = await Promise.all([
-    getPublishedPostBySlug(env.DB, params.slug),
-    getSiteSettings(env.DB),
+    getPublishedPostBySlugCached(env.DB, params.slug),
+    getSiteSettingsCached(env.DB),
   ]);
   if (!result) return {};
 
@@ -76,12 +71,12 @@ export async function generateMetadata({
 
 export default async function PostBySlug({ params }: { params: { slug: string } }) {
   const env = getEnv();
-  const result = await getPublishedPostBySlug(env.DB, params.slug);
+  const result = await getPublishedPostBySlugCached(env.DB, params.slug);
   if (!result) notFound();
 
   const [themeName, site, body, user] = await Promise.all([
     getActiveThemeName(env.DB),
-    getSiteSettings(env.DB),
+    getSiteSettingsCached(env.DB),
     readPostBody(env.R2, result.row.body_key),
     getCurrentUser(),
   ]);

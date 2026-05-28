@@ -1,22 +1,17 @@
+import { cache } from "react";
 import { loadTheme } from "@/themes/loader";
-import { headers } from "next/headers";
 import type { Metadata } from "next";
-import { getEnv } from "@/lib/cf";
+import { getEnv, getOrigin } from "@/lib/cf";
 import { getActiveThemeName, getSiteSettings, listPublishedPosts } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
 
-function getOrigin(): string {
-  const headersList = headers();
-  const host = headersList.get("host") ?? "localhost:3000";
-  const proto = headersList.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
+const getSiteSettingsCached = cache(getSiteSettings);
 
 export async function generateMetadata(): Promise<Metadata> {
   const env = getEnv();
-  const site = await getSiteSettings(env.DB);
+  const site = await getSiteSettingsCached(env.DB);
   const origin = getOrigin();
   const logoUrl = site.logo_key ? `${origin}/api/media/${site.logo_key}` : undefined;
 
@@ -55,7 +50,7 @@ export default async function Home({
 
   const [themeName, site, listing, user] = await Promise.all([
     getActiveThemeName(env.DB),
-    getSiteSettings(env.DB),
+    getSiteSettingsCached(env.DB),
     listPublishedPosts(env.DB, { page, perPage: 10 }),
     getCurrentUser(),
   ]);
