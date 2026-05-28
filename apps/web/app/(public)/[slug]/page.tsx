@@ -1,6 +1,8 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { loadTheme } from "@/themes/loader";
-import { getEnv } from "@/lib/cf";
+import { getEnv, getOrigin } from "@/lib/cf";
 import {
   getActiveThemeName,
   getPublishedPostBySlug,
@@ -12,14 +14,69 @@ import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
 
+const getPublishedPostBySlugCached = cache(getPublishedPostBySlug);
+const getSiteSettingsCached = cache(getSiteSettings);
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const env = getEnv();
+  const [result, site] = await Promise.all([
+    getPublishedPostBySlugCached(env.DB, params.slug),
+    getSiteSettingsCached(env.DB),
+  ]);
+  if (!result) return {};
+
+  const origin = getOrigin();
+  const url = `${origin}/${result.row.slug}/`;
+  const coverUrl = result.row.cover_key
+    ? `${origin}/api/media/${result.row.cover_key}`
+    : site.logo_key
+      ? `${origin}/api/media/${site.logo_key}`
+      : undefined;
+
+  const description = result.row.excerpt
+    ? result.row.excerpt.slice(0, 160)
+    : site.description?.slice(0, 160) || undefined;
+
+  const publishedAt = result.row.published_at
+    ? new Date(result.row.published_at * 1000).toISOString()
+    : undefined;
+
+  const firstTag = result.tags[0]?.name;
+
+  return {
+    title: result.row.title,
+    description,
+    openGraph: {
+      type: "article",
+      title: result.row.title,
+      description,
+      url,
+      siteName: site.title,
+      images: coverUrl ? [{ url: coverUrl }] : undefined,
+      publishedTime: publishedAt,
+      tags: firstTag ? [firstTag] : undefined,
+    },
+    twitter: {
+      card: coverUrl ? "summary_large_image" : "summary",
+      title: result.row.title,
+      description,
+      images: coverUrl ? [coverUrl] : undefined,
+    },
+  };
+}
+
 export default async function PostBySlug({ params }: { params: { slug: string } }) {
   const env = getEnv();
-  const result = await getPublishedPostBySlug(env.DB, params.slug);
+  const result = await getPublishedPostBySlugCached(env.DB, params.slug);
   if (!result) notFound();
 
   const [themeName, site, body, user] = await Promise.all([
     getActiveThemeName(env.DB),
-    getSiteSettings(env.DB),
+    getSiteSettingsCached(env.DB),
     readPostBody(env.R2, result.row.body_key),
     getCurrentUser(),
   ]);

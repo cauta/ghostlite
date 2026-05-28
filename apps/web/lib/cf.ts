@@ -1,4 +1,5 @@
 import { getRequestContext } from "@cloudflare/next-on-pages";
+import { headers } from "next/headers";
 import type { CloudflareEnv } from "./env";
 
 /**
@@ -10,4 +11,12 @@ import type { CloudflareEnv } from "./env";
  */
 export function getEnv(): CloudflareEnv {
   return getRequestContext().env as CloudflareEnv;
+}
+
+/** Derive the canonical origin from request headers — works on both CF Pages and local dev. */
+export function getOrigin(): string {
+  const headersList = headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const proto = headersList.get("x-forwarded-proto") ?? "http";
+  return `${proto}://${host}`;
 }

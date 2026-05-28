@@ -1,9 +1,44 @@
+import { cache } from "react";
 import { loadTheme } from "@/themes/loader";
-import { getEnv } from "@/lib/cf";
+import type { Metadata } from "next";
+import { getEnv, getOrigin } from "@/lib/cf";
 import { getActiveThemeName, getSiteSettings, listPublishedPosts } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
+
+const getSiteSettingsCached = cache(getSiteSettings);
+
+export async function generateMetadata(): Promise<Metadata> {
+  const env = getEnv();
+  const site = await getSiteSettingsCached(env.DB);
+  const origin = getOrigin();
+  const logoUrl = site.logo_key ? `${origin}/api/media/${site.logo_key}` : undefined;
+
+  return {
+    title: site.title,
+    description: site.description || undefined,
+    openGraph: {
+      type: "website",
+      title: site.title,
+      description: site.description || undefined,
+      url: `${origin}/`,
+      siteName: site.title,
+      images: logoUrl ? [{ url: logoUrl }] : undefined,
+    },
+    twitter: {
+      card: "summary",
+      title: site.title,
+      description: site.description || undefined,
+      images: logoUrl ? [logoUrl] : undefined,
+    },
+    alternates: {
+      types: {
+        "application/rss+xml": `${origin}/rss/`,
+      },
+    },
+  };
+}
 
 export default async function Home({
   searchParams,
@@ -15,7 +50,7 @@ export default async function Home({
 
   const [themeName, site, listing, user] = await Promise.all([
     getActiveThemeName(env.DB),
-    getSiteSettings(env.DB),
+    getSiteSettingsCached(env.DB),
     listPublishedPosts(env.DB, { page, perPage: 10 }),
     getCurrentUser(),
   ]);
