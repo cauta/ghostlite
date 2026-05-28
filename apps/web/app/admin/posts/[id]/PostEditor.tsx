@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
+
+type TagOption = { slug: string; name: string };
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -64,6 +66,11 @@ export default function PostEditor({ post }: { post: Post }) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleAt, setScheduleAt] = useState(epochToLocalInput(post.scheduledAt));
   const [tagInput, setTagInput] = useState("");
+  const [allTags, setAllTags] = useState<TagOption[]>([]);
+  const [suggestions, setSuggestions] = useState<TagOption[]>([]);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const tagInputRef = useRef<HTMLInputElement>(null);
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
   const salt = post.id.slice(-6);
   // The slug is "untouched" (auto-tracks the title) only when it still matches
   // the auto-generated pattern. Any prior manual edit shows up as a mismatch.
@@ -77,6 +84,29 @@ export default function PostEditor({ post }: { post: Post }) {
   useEffect(() => {
     draftRef.current = draft;
   }, [draft]);
+
+  useEffect(() => {
+    fetch("/api/tags")
+      .then((r) => r.json())
+      .then((data) => setAllTags((data as { tags: TagOption[] }).tags))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        tagInputRef.current &&
+        !tagInputRef.current.contains(e.target as Node) &&
+        tagDropdownRef.current &&
+        !tagDropdownRef.current.contains(e.target as Node)
+      ) {
+        setSuggestions([]);
+        setActiveSuggestion(-1);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   function update<K extends keyof Post>(key: K, value: Post[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -243,14 +273,37 @@ export default function PostEditor({ post }: { post: Post }) {
     }
   }
 
-  function addTag() {
-    const t = tagInput.trim();
+  function handleTagInput(value: string) {
+    setTagInput(value);
+    setActiveSuggestion(-1);
+    if (!value.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    const lower = value.toLowerCase();
+    const filtered = allTags.filter(
+      (t) =>
+        t.name.toLowerCase().includes(lower) &&
+        !draft.tags.includes(t.name),
+    );
+    setSuggestions(filtered.slice(0, 8));
+  }
+
+  function addTag(nameOverride?: string) {
+    const t = (nameOverride ?? tagInput).trim();
+    setSuggestions([]);
+    setActiveSuggestion(-1);
     if (!t) return;
     if (draft.tags.includes(t)) {
       setTagInput("");
       return;
     }
-    update("tags", [...draft.tags, t]);
+    // Prefer exact-match (case-insensitive) to avoid creating near-duplicate tags
+    const existing = allTags.find((x) => x.name.toLowerCase() === t.toLowerCase());
+    const resolved = existing ? existing.name : t;
+    if (!draft.tags.includes(resolved)) {
+      update("tags", [...draft.tags, resolved]);
+    }
     setTagInput("");
   }
 
@@ -448,18 +501,57 @@ export default function PostEditor({ post }: { post: Post }) {
                   </span>
                 ))}
               </div>
-              <input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === ",") {
-                    e.preventDefault();
-                    addTag();
-                  }
-                }}
-                onBlur={addTag}
-                placeholder="Add tag, press Enter"
-              />
+              <div className="tag-input-wrap">
+                <input
+                  ref={tagInputRef}
+                  value={tagInput}
+                  onChange={(e) => handleTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setActiveSuggestion((i) => Math.min(i + 1, suggestions.length - 1));
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setActiveSuggestion((i) => Math.max(i - 1, -1));
+                    } else if (e.key === "Enter" || e.key === ",") {
+                      e.preventDefault();
+                      if (activeSuggestion >= 0 && suggestions[activeSuggestion]) {
+                        addTag(suggestions[activeSuggestion].name);
+                      } else {
+                        addTag();
+                      }
+                    } else if (e.key === "Escape") {
+                      setSuggestions([]);
+                      setActiveSuggestion(-1);
+                    }
+                  }}
+                  onBlur={() => {
+                    // Delay so click on suggestion fires first
+                    setTimeout(() => {
+                      setSuggestions([]);
+                      setActiveSuggestion(-1);
+                    }, 150);
+                  }}
+                  placeholder="Add tag, press Enter"
+                />
+                {suggestions.length > 0 && (
+                  <div className="tag-suggestions" ref={tagDropdownRef}>
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={s.slug}
+                        type="button"
+                        className={`tag-suggestion-item${i === activeSuggestion ? " active" : ""}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          addTag(s.name);
+                        }}
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </section>
 
             <section>
