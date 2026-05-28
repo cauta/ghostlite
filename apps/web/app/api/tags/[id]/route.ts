@@ -25,10 +25,14 @@ export async function PATCH(req: Request, { params }: Ctx) {
     await updateTag(env.DB, params.id, { name, slug });
     return NextResponse.json({ ok: true });
   } catch (e) {
-    // Slug uniqueness violation
-    const msg = e instanceof Error ? e.message : "Update failed";
-    const status = msg.includes("UNIQUE") ? 409 : 500;
-    return NextResponse.json({ error: msg }, { status });
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("UNIQUE")) {
+      return NextResponse.json(
+        { error: `A tag named "${name}" already exists. Please choose a different name.` },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }
 
