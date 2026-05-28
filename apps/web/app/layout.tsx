@@ -9,6 +9,11 @@ export const runtime = "edge";
 export const metadata: Metadata = {
   title: "Ghostlite",
   description: "A blog",
+  alternates: {
+    types: {
+      "application/rss+xml": "/rss/",
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
