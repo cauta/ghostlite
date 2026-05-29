@@ -64,6 +64,7 @@ export default function PostEditor({ post }: { post: Post }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [scheduleAt, setScheduleAt] = useState(epochToLocalInput(post.scheduledAt));
   const [tagInput, setTagInput] = useState("");
   const [allTags, setAllTags] = useState<TagOption[]>([]);
@@ -157,6 +158,18 @@ export default function PostEditor({ post }: { post: Post }) {
     },
     [post.id],
   );
+
+  // Cmd/Ctrl+S — save now (works for both drafts and published posts).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        save();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [save]);
 
   // Autosave drafts/scheduled posts on a 1.5s debounce after edits.
   // Published posts require an explicit "Update" click (Ghost behavior).
@@ -260,8 +273,8 @@ export default function PostEditor({ post }: { post: Post }) {
     }
   }
 
-  async function destroy() {
-    if (!confirm("Delete this post permanently?")) return;
+  async function doDelete() {
+    setConfirmDelete(false);
     setBusy("delete");
     try {
       const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
@@ -583,7 +596,7 @@ export default function PostEditor({ post }: { post: Post }) {
               <button
                 type="button"
                 className="admin-btn danger"
-                onClick={destroy}
+                onClick={() => setConfirmDelete(true)}
                 disabled={busy !== null}
               >
                 Delete post
@@ -592,6 +605,31 @@ export default function PostEditor({ post }: { post: Post }) {
           </aside>
         )}
       </div>
+
+      {confirmDelete && (
+        <div className="post-editor-modal-backdrop" onClick={() => setConfirmDelete(false)}>
+          <div className="post-editor-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete &ldquo;{draft.title || "Untitled"}&rdquo;?</h3>
+            <p>This will permanently delete the post and its media. This cannot be undone.</p>
+            <div className="post-editor-modal-actions">
+              <button
+                type="button"
+                className="admin-btn"
+                onClick={() => setConfirmDelete(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="admin-btn danger"
+                onClick={doDelete}
+              >
+                Delete post
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {scheduleOpen && (
         <div className="post-editor-modal-backdrop" onClick={() => setScheduleOpen(false)}>
