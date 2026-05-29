@@ -307,6 +307,20 @@ export async function deleteTag(db: D1Database, id: string): Promise<void> {
   await db.prepare("DELETE FROM tags WHERE id = ?").bind(id).run();
 }
 
+/** Create a new tag. Throws on duplicate slug (D1 UNIQUE constraint). */
+export async function createTag(
+  db: D1Database,
+  name: string,
+  slug: string,
+): Promise<TagWithCount> {
+  const id = crypto.randomUUID().replace(/-/g, "");
+  await db
+    .prepare("INSERT INTO tags (id, name, slug) VALUES (?, ?, ?)")
+    .bind(id, name, slug)
+    .run();
+  return { id, name, slug, postCount: 0 };
+}
+
 export async function getPostTags(db: D1Database, postId: string): Promise<Tag[]> {
   const res = await db
     .prepare(

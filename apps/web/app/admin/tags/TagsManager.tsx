@@ -21,6 +21,12 @@ export default function TagsManager({ tags: initial }: { tags: Tag[] }) {
   const [error, setError] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
+  // ── create row state ────────────────────────────────────────────────────────
+  const [creating, setCreating] = useState(false);
+  const [createState, setCreateState] = useState<EditState>({ name: "", slug: "", slugTouched: false });
+  const [createError, setCreateError] = useState<string | null>(null);
+  const createNameRef = useRef<HTMLInputElement>(null);
+
   // ── open edit row ──────────────────────────────────────────────────────────
   function startEdit(tag: Tag) {
     setEditingId(tag.id);
@@ -32,6 +38,64 @@ export default function TagsManager({ tags: initial }: { tags: Tag[] }) {
   function cancelEdit() {
     setEditingId(null);
     setError(null);
+  }
+
+  // ── create handlers ─────────────────────────────────────────────────────────
+  function startCreate() {
+    setCreating(true);
+    setCreateState({ name: "", slug: "", slugTouched: false });
+    setCreateError(null);
+    setEditingId(null);
+    setTimeout(() => createNameRef.current?.focus(), 0);
+  }
+
+  function cancelCreate() {
+    setCreating(false);
+    setCreateError(null);
+  }
+
+  function handleCreateNameChange(value: string) {
+    setCreateState((s) => ({
+      ...s,
+      name: value,
+      slug: s.slugTouched ? s.slug : slugify(value),
+    }));
+  }
+
+  function handleCreateSlugChange(value: string) {
+    setCreateState((s) => ({
+      ...s,
+      slug: value.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+      slugTouched: true,
+    }));
+  }
+
+  async function saveCreate() {
+    const { name, slug } = createState;
+    if (!name.trim() || !slug.trim()) {
+      setCreateError("Name and slug cannot be empty.");
+      return;
+    }
+    setBusy(true);
+    setCreateError(null);
+    try {
+      const res = await fetch("/api/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), slug: slug.trim() }),
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? "Create failed");
+      }
+      const newTag = (await res.json()) as Tag;
+      setTags((ts) => [newTag, ...ts]);
+      setCreating(false);
+    } catch (e) {
+      setCreateError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   function handleNameChange(value: string) {
@@ -104,10 +168,13 @@ export default function TagsManager({ tags: initial }: { tags: Tag[] }) {
     <div>
       <div className="admin-page-header">
         <h1>Tags</h1>
+        <button className="admin-btn primary" onClick={startCreate} disabled={creating || busy}>
+          New tag
+        </button>
       </div>
 
       <p style={{ color: "var(--a-fg-muted)", fontSize: 14, marginBottom: 20 }}>
-        {tags.length === 0
+        {tags.length === 0 && !creating
           ? "No tags yet. Tags are created automatically when you add them to a post."
           : `${tags.length} tag${tags.length === 1 ? "" : "s"} — click a row to rename it.`}
       </p>
@@ -116,7 +183,7 @@ export default function TagsManager({ tags: initial }: { tags: Tag[] }) {
         <div className="admin-error" style={{ marginBottom: 16 }}>{error}</div>
       ) : null}
 
-      {tags.length > 0 && (
+      {(creating || tags.length > 0) && (
         <table className="admin-table">
           <thead>
             <tr>
@@ -127,6 +194,67 @@ export default function TagsManager({ tags: initial }: { tags: Tag[] }) {
             </tr>
           </thead>
           <tbody>
+            {/* ── inline create row ──────────────────────────────────────── */}
+            {creating && (
+              <tr style={{ background: "var(--a-bg)" }}>
+                <td>
+                  <input
+                    ref={createNameRef}
+                    className="admin-inline-input"
+                    value={createState.name}
+                    onChange={(e) => handleCreateNameChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveCreate();
+                      if (e.key === "Escape") cancelCreate();
+                    }}
+                    disabled={busy}
+                    placeholder="Tag name"
+                    aria-label="New tag name"
+                  />
+                  {createError && (
+                    <div style={{ color: "var(--a-danger)", fontSize: 12, marginTop: 4 }}>
+                      {createError}
+                    </div>
+                  )}
+                </td>
+                <td>
+                  <input
+                    className="admin-inline-input"
+                    value={createState.slug}
+                    onChange={(e) => handleCreateSlugChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveCreate();
+                      if (e.key === "Escape") cancelCreate();
+                    }}
+                    disabled={busy}
+                    placeholder="tag-slug"
+                    aria-label="New tag slug"
+                    style={{ fontFamily: "ui-monospace, monospace", fontSize: 13 }}
+                  />
+                </td>
+                <td style={{ textAlign: "right", color: "var(--a-fg-muted)" }}>0</td>
+                <td>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      className="admin-btn primary"
+                      onClick={saveCreate}
+                      disabled={busy}
+                      style={{ padding: "4px 12px", fontSize: 13 }}
+                    >
+                      {busy ? "Saving…" : "Save"}
+                    </button>
+                    <button
+                      className="admin-btn"
+                      onClick={cancelCreate}
+                      disabled={busy}
+                      style={{ padding: "4px 12px", fontSize: 13 }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )}
             {tags.map((tag) =>
               editingId === tag.id ? (
                 // ── edit row ──────────────────────────────────────────────────
@@ -229,7 +357,7 @@ export default function TagsManager({ tags: initial }: { tags: Tag[] }) {
       ) : null}
 
       <p style={{ marginTop: 24, fontSize: 13, color: "var(--a-fg-muted)" }}>
-        Tags are created automatically when you add them to a post in the editor.
+        Tags can be created here or automatically from the post editor.
         Deleting a tag removes it from all posts.
       </p>
     </div>
