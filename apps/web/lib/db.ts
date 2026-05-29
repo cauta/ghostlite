@@ -433,6 +433,11 @@ export async function getAllPublishedPostSlugs(db: D1Database): Promise<PostSlug
   return (res.results as PostSlugRow[]) ?? [];
 }
 
+export async function countTags(db: D1Database): Promise<number> {
+  const res = await db.prepare("SELECT COUNT(*) as c FROM tags").first<{ c: number }>();
+  return res?.c ?? 0;
+}
+
 /** Slugs of tags that have at least one published post — for sitemap.xml. */
 export async function getAllTagsWithPublishedPosts(db: D1Database): Promise<string[]> {
   const res = await db
