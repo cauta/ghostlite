@@ -62,10 +62,13 @@ type PostRow = {
   author_id: string;
   author_name: string;
   author_avatar: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
 };
 
 const PUBLIC_POST_COLUMNS = `
   p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at,
+  p.seo_title, p.seo_description,
   u.id   as author_id,
   u.name as author_name,
   u.avatar_key as author_avatar
@@ -257,10 +260,13 @@ export async function getPostById(
   author_id: string;
   scheduled_at: number | null;
   published_at: number | null;
+  seo_title: string | null;
+  seo_description: string | null;
 } | null> {
   return await db
     .prepare(
-      `SELECT id, slug, title, excerpt, cover_key, body_key, status, author_id, scheduled_at, published_at
+      `SELECT id, slug, title, excerpt, cover_key, body_key, status, author_id, scheduled_at, published_at,
+              seo_title, seo_description
        FROM posts WHERE id = ?`,
     )
     .bind(id)
@@ -386,6 +392,8 @@ export async function updatePost(
     status: "draft" | "scheduled" | "published";
     publishedAt: number | null;
     scheduledAt: number | null;
+    seoTitle: string | null;
+    seoDescription: string | null;
   }>,
 ): Promise<void> {
   const sets: string[] = [];
@@ -398,6 +406,8 @@ export async function updatePost(
     status: "status",
     publishedAt: "published_at",
     scheduledAt: "scheduled_at",
+    seoTitle: "seo_title",
+    seoDescription: "seo_description",
   };
   for (const [k, v] of Object.entries(patch)) {
     if (v === undefined) continue;

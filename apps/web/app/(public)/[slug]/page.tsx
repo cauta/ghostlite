@@ -37,9 +37,13 @@ export async function generateMetadata({
       ? `${origin}/api/media/${site.logo_key}`
       : undefined;
 
-  const description = result.row.excerpt
-    ? result.row.excerpt.slice(0, 160)
-    : site.description?.slice(0, 160) || undefined;
+  const metaTitle = result.row.seo_title || result.row.title;
+  const description = (
+    result.row.seo_description ||
+    result.row.excerpt ||
+    site.description ||
+    ""
+  ).slice(0, 160) || undefined;
 
   const publishedAt = result.row.published_at
     ? new Date(result.row.published_at * 1000).toISOString()
@@ -48,11 +52,11 @@ export async function generateMetadata({
   const firstTag = result.tags[0]?.name;
 
   return {
-    title: result.row.title,
+    title: metaTitle,
     description,
     openGraph: {
       type: "article",
-      title: result.row.title,
+      title: metaTitle,
       description,
       url,
       siteName: site.title,
@@ -62,7 +66,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: coverUrl ? "summary_large_image" : "summary",
-      title: result.row.title,
+      title: metaTitle,
       description,
       images: coverUrl ? [coverUrl] : undefined,
     },
