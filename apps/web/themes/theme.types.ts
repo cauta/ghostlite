@@ -55,6 +55,8 @@ export type HomePageProps = ThemeContext & {
 
 export type PostPageProps = ThemeContext & {
   post: PostFull;
+  /** Distinguishes standalone pages from dated blog posts. Themes may render these differently. */
+  pageType?: "post" | "page";
 };
 
 export type TagPageProps = ThemeContext & {

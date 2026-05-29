@@ -102,5 +102,5 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     user: user ? { name: user.name, role: user.role } : null,
   };
 
-  return <theme.pages.Post {...ctx} post={post} />;
+  return <theme.pages.Post {...ctx} post={post} pageType={result.row.type} />;
 }

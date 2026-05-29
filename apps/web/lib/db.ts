@@ -62,10 +62,11 @@ type PostRow = {
   author_id: string;
   author_name: string;
   author_avatar: string | null;
+  type: "post" | "page";
 };
 
 const PUBLIC_POST_COLUMNS = `
-  p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at,
+  p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at, p.type,
   u.id   as author_id,
   u.name as author_name,
   u.avatar_key as author_avatar
@@ -99,13 +100,13 @@ export async function listPublishedPosts(
       .prepare(
         `SELECT ${PUBLIC_POST_COLUMNS}
          FROM posts p JOIN users u ON u.id = p.author_id
-         WHERE p.status = 'published' AND p.published_at <= unixepoch()
+         WHERE p.status = 'published' AND p.published_at <= unixepoch() AND p.type = 'post'
          ORDER BY p.published_at DESC
          LIMIT ? OFFSET ?`,
       )
       .bind(perPage, offset),
     db.prepare(
-      `SELECT COUNT(*) as c FROM posts WHERE status = 'published' AND published_at <= unixepoch()`,
+      `SELECT COUNT(*) as c FROM posts WHERE status = 'published' AND published_at <= unixepoch() AND type = 'post'`,
     ),
   ]);
 
@@ -167,7 +168,7 @@ export async function listPostsByTag(
        JOIN users u ON u.id = p.author_id
        JOIN post_tags pt ON pt.post_id = p.id
        JOIN tags t ON t.id = pt.tag_id
-       WHERE t.slug = ? AND p.status = 'published' AND p.published_at <= unixepoch()
+       WHERE t.slug = ? AND p.status = 'published' AND p.published_at <= unixepoch() AND p.type = 'post'
        ORDER BY p.published_at DESC
        LIMIT 50`,
     )
@@ -198,7 +199,7 @@ export async function getRecentPublishedPosts(
       `SELECT p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at,
               u.name as author_name
        FROM posts p JOIN users u ON u.id = p.author_id
-       WHERE p.status = 'published' AND p.published_at <= unixepoch()
+       WHERE p.status = 'published' AND p.published_at <= unixepoch() AND p.type = 'post'
        ORDER BY p.published_at DESC
        LIMIT ?`,
     )
@@ -214,6 +215,7 @@ export type AdminPostRow = {
   slug: string;
   title: string;
   status: "draft" | "scheduled" | "published";
+  type: "post" | "page";
   author_id: string;
   author_name: string;
   updated_at: number;
@@ -223,10 +225,10 @@ export type AdminPostRow = {
 export async function listAllPosts(db: D1Database): Promise<AdminPostRow[]> {
   const res = await db
     .prepare(
-      `SELECT p.id, p.slug, p.title, p.status, p.author_id, u.name as author_name,
+      `SELECT p.id, p.slug, p.title, p.status, p.type, p.author_id, u.name as author_name,
               p.updated_at, p.published_at
        FROM posts p JOIN users u ON u.id = p.author_id
-       ORDER BY p.updated_at DESC LIMIT 100`,
+       ORDER BY p.updated_at DESC LIMIT 200`,
     )
     .all<AdminPostRow>();
   return (res.results as AdminPostRow[]) ?? [];
@@ -363,15 +365,16 @@ export async function setPostTags(
 
 export async function createPost(
   db: D1Database,
-  args: { id: string; slug: string; title: string; excerpt: string; bodyKey: string; authorId: string },
+  args: { id: string; slug: string; title: string; excerpt: string; bodyKey: string; authorId: string; type?: "post" | "page" },
 ): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
+  const type = args.type ?? "post";
   await db
     .prepare(
-      `INSERT INTO posts (id, slug, title, excerpt, body_key, status, author_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, ?)`,
+      `INSERT INTO posts (id, slug, title, excerpt, body_key, status, type, author_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)`,
     )
-    .bind(args.id, args.slug, args.title, args.excerpt, args.bodyKey, args.authorId, now, now)
+    .bind(args.id, args.slug, args.title, args.excerpt, args.bodyKey, type, args.authorId, now, now)
     .run();
 }
 
@@ -422,25 +425,26 @@ export async function deletePost(db: D1Database, id: string): Promise<void> {
 
 export type PostSlugRow = { slug: string; updated_at: number };
 
-/** All published post slugs + their last-modified timestamp for sitemap.xml. */
+/** All published post slugs + their last-modified timestamp for sitemap.xml. Excludes pages. */
 export async function getAllPublishedPostSlugs(db: D1Database): Promise<PostSlugRow[]> {
   const res = await db
     .prepare(
-      `SELECT slug, updated_at FROM posts WHERE status = 'published' AND published_at <= unixepoch()
+      `SELECT slug, updated_at FROM posts
+       WHERE status = 'published' AND published_at <= unixepoch() AND type = 'post'
        ORDER BY published_at DESC`,
     )
     .all<PostSlugRow>();
   return (res.results as PostSlugRow[]) ?? [];
 }
 
-/** Slugs of tags that have at least one published post — for sitemap.xml. */
+/** Slugs of tags that have at least one published post — for sitemap.xml. Excludes pages. */
 export async function getAllTagsWithPublishedPosts(db: D1Database): Promise<string[]> {
   const res = await db
     .prepare(
       `SELECT DISTINCT t.slug FROM tags t
        INNER JOIN post_tags pt ON pt.tag_id = t.id
        INNER JOIN posts p ON pt.post_id = p.id
-       WHERE p.status = 'published' AND p.published_at <= unixepoch()`,
+       WHERE p.status = 'published' AND p.published_at <= unixepoch() AND p.type = 'post'`,
     )
     .all<{ slug: string }>();
   return ((res.results as { slug: string }[]) ?? []).map((r) => r.slug);
