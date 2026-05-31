@@ -5,6 +5,7 @@ import { loadTheme } from "@/themes/loader";
 import { getEnv, getOrigin } from "@/lib/cf";
 import { getActiveThemeName, getSiteSettings, listPostsByTag } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { getCanonicalUrl } from "@/lib/seo";
 
 export const runtime = "edge";
 
@@ -31,6 +32,9 @@ export async function generateMetadata({
   return {
     title: tagTitle,
     description,
+    alternates: {
+      canonical: getCanonicalUrl(origin, `/tag/${data.tag.slug}/`),
+    },
     openGraph: {
       type: "website",
       title: tagTitle,
