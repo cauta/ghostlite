@@ -63,13 +63,14 @@ type PostRow = {
   cover_key: string | null;
   body_key: string;
   published_at: number;
+  updated_at: number;
   author_id: string;
   author_name: string;
   author_avatar: string | null;
 };
 
 const PUBLIC_POST_COLUMNS = `
-  p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at,
+  p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at, p.updated_at,
   u.id   as author_id,
   u.name as author_name,
   u.avatar_key as author_avatar
