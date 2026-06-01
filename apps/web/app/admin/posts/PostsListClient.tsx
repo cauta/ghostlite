@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { AdminPostRow } from "@/lib/db";
 
 type StatusTab = "all" | "draft" | "scheduled" | "published";
 type ViewTab = "posts" | "pages";
+
+const VALID_STATUS_TABS = new Set<StatusTab>(["all", "draft", "scheduled", "published"]);
 
 const STATUS_TAB_LABELS: Record<StatusTab, string> = {
   all: "All",
@@ -16,7 +19,11 @@ const STATUS_TAB_LABELS: Record<StatusTab, string> = {
 
 export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
   const [view, setView] = useState<ViewTab>("posts");
-  const [statusTab, setStatusTab] = useState<StatusTab>("all");
+  const searchParams = useSearchParams();
+  const urlStatus = searchParams.get("status") as StatusTab | null;
+  const urlStatusTab: StatusTab = urlStatus && VALID_STATUS_TABS.has(urlStatus) ? urlStatus : "all";
+  const [manualStatusTab, setManualStatusTab] = useState<StatusTab | null>(null);
+  const statusTab: StatusTab = manualStatusTab ?? urlStatusTab;
 
   const allPosts = posts.filter((p) => p.type === "post");
   const allPages = posts.filter((p) => p.type === "page");
@@ -142,7 +149,7 @@ export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
                 role="tab"
                 aria-selected={statusTab === t}
                 className={`posts-filter-tab${statusTab === t ? " active" : ""}`}
-                onClick={() => setStatusTab(t)}
+                onClick={() => setManualStatusTab(t)}
               >
                 {STATUS_TAB_LABELS[t]}
                 <span className="posts-filter-count">{statusCounts[t]}</span>

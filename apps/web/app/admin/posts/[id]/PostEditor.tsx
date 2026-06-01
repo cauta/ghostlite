@@ -27,6 +27,8 @@ type Post = {
   scheduledAt: number | null;
   publishedAt: number | null;
   tags: string[];
+  seoTitle: string;
+  seoDescription: string;
 };
 
 function slugify(s: string) {
@@ -65,6 +67,7 @@ export default function PostEditor({ post }: { post: Post }) {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [scheduleAt, setScheduleAt] = useState(epochToLocalInput(post.scheduledAt));
   const [tagInput, setTagInput] = useState("");
   const [allTags, setAllTags] = useState<TagOption[]>([]);
@@ -185,6 +188,8 @@ export default function PostEditor({ post }: { post: Post }) {
           coverKey: d.coverKey,
           body: d.body,
           tags: d.tags,
+          seoTitle: d.seoTitle || null,
+          seoDescription: d.seoDescription || null,
         });
         setSavedAt(Date.now());
       } catch (e) {
@@ -195,6 +200,18 @@ export default function PostEditor({ post }: { post: Post }) {
     },
     [post.id],
   );
+
+  // Cmd/Ctrl+S — save now (works for both drafts and published posts).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        save();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [save]);
 
   // Clear toast and remove DOM element on unmount.
   useEffect(() => () => {
@@ -211,7 +228,7 @@ export default function PostEditor({ post }: { post: Post }) {
     }, 1500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.body, draft.title, draft.slug, draft.excerpt, draft.coverKey, draft.tags]);
+  }, [draft.body, draft.title, draft.slug, draft.excerpt, draft.coverKey, draft.tags, draft.seoTitle, draft.seoDescription]);
 
   async function publishNow() {
     setBusy("publish");
@@ -225,6 +242,8 @@ export default function PostEditor({ post }: { post: Post }) {
         coverKey: draft.coverKey,
         body: draft.body,
         tags: draft.tags,
+        seoTitle: draft.seoTitle || null,
+        seoDescription: draft.seoDescription || null,
       });
       const res = await fetch(`/api/posts/${post.id}/publish`, { method: "POST" });
       if (!res.ok) throw new Error("Publish failed");
@@ -278,6 +297,8 @@ export default function PostEditor({ post }: { post: Post }) {
         tags: draft.tags,
         status: "scheduled",
         scheduledAt: epoch,
+        seoTitle: draft.seoTitle || null,
+        seoDescription: draft.seoDescription || null,
       });
       update("status", "scheduled");
       update("scheduledAt", epoch);
@@ -305,8 +326,8 @@ export default function PostEditor({ post }: { post: Post }) {
     }
   }
 
-  async function destroy() {
-    if (!confirm("Delete this post permanently?")) return;
+  async function doDelete() {
+    setConfirmDelete(false);
     setBusy("delete");
     try {
       const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
@@ -600,6 +621,56 @@ export default function PostEditor({ post }: { post: Post }) {
             </section>
 
             <section>
+              <details>
+                <summary style={{ cursor: "pointer", fontSize: 12, fontWeight: 600, color: "var(--a-fg-muted)", userSelect: "none" }}>
+                  SEO
+                </summary>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 10 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <label>
+                      Meta title
+                      <span style={{ marginLeft: 6, fontWeight: 400, color: draft.seoTitle.length > 70 ? "var(--a-danger, #e53)" : "var(--a-fg-muted)" }}>
+                        {draft.seoTitle.length}/70
+                      </span>
+                    </label>
+                    <input
+                      value={draft.seoTitle}
+                      onChange={(e) => update("seoTitle", e.target.value)}
+                      placeholder={draft.title || "Post title"}
+                      maxLength={200}
+                    />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <label>
+                      Meta description
+                      <span style={{ marginLeft: 6, fontWeight: 400, color: draft.seoDescription.length > 160 ? "var(--a-danger, #e53)" : "var(--a-fg-muted)" }}>
+                        {draft.seoDescription.length}/160
+                      </span>
+                    </label>
+                    <textarea
+                      value={draft.seoDescription}
+                      onChange={(e) => update("seoDescription", e.target.value)}
+                      placeholder={draft.excerpt || "Post description"}
+                      rows={3}
+                      maxLength={500}
+                    />
+                  </div>
+                  <div style={{ background: "var(--a-surface, #fff)", border: "1px solid var(--a-border)", borderRadius: 6, padding: "10px 12px", fontSize: 13, lineHeight: 1.4 }}>
+                    <div style={{ color: "#1a0dab", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontWeight: 400 }}>
+                      {(draft.seoTitle || draft.title || "Post title").slice(0, 70)}
+                    </div>
+                    <div style={{ color: "#006621", fontSize: 12, margin: "2px 0" }}>
+                      yoursite.com/{draft.slug}
+                    </div>
+                    <div style={{ color: "#545454", fontSize: 12 }}>
+                      {(draft.seoDescription || draft.excerpt || "No description set.").slice(0, 160)}
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </section>
+
+            <section>
               <label>Publish date</label>
               {isPublished && draft.publishedAt ? (
                 <p className="hint">
@@ -628,7 +699,7 @@ export default function PostEditor({ post }: { post: Post }) {
               <button
                 type="button"
                 className="admin-btn danger"
-                onClick={destroy}
+                onClick={() => setConfirmDelete(true)}
                 disabled={busy !== null}
               >
                 Delete post
@@ -637,6 +708,31 @@ export default function PostEditor({ post }: { post: Post }) {
           </aside>
         )}
       </div>
+
+      {confirmDelete && (
+        <div className="post-editor-modal-backdrop" onClick={() => setConfirmDelete(false)}>
+          <div className="post-editor-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete &ldquo;{draft.title || "Untitled"}&rdquo;?</h3>
+            <p>This will permanently delete the post and its media. This cannot be undone.</p>
+            <div className="post-editor-modal-actions">
+              <button
+                type="button"
+                className="admin-btn"
+                onClick={() => setConfirmDelete(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="admin-btn danger"
+                onClick={doDelete}
+              >
+                Delete post
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {scheduleOpen && (
         <div className="post-editor-modal-backdrop" onClick={() => setScheduleOpen(false)}>

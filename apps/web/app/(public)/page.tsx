@@ -5,6 +5,7 @@ import { getEnv, getOrigin } from "@/lib/cf";
 import { getActiveThemeName, getSiteSettings, listPublishedPosts } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { JsonLd } from "@/components/JsonLd";
+import { getCanonicalUrl } from "@/lib/seo";
 
 export const runtime = "edge";
 
@@ -34,6 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
       images: logoUrl ? [logoUrl] : undefined,
     },
     alternates: {
+      canonical: getCanonicalUrl(origin, "/"),
       types: {
         "application/rss+xml": `${origin}/rss/`,
       },

@@ -31,6 +31,8 @@ export default async function EditPost({ params }: { params: { id: string } }) {
         scheduledAt: post.scheduled_at,
         publishedAt: post.published_at,
         tags: tags.map((t) => t.name),
+        seoTitle: post.seo_title ?? "",
+        seoDescription: post.seo_description ?? "",
       }}
     />
   );
