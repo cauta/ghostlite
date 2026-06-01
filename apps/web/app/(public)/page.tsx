@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getEnv, getOrigin } from "@/lib/cf";
 import { getActiveThemeName, getSiteSettings, listPublishedPosts } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { JsonLd } from "@/components/JsonLd";
 import { getCanonicalUrl } from "@/lib/seo";
 
 export const runtime = "edge";
@@ -68,12 +69,24 @@ export default async function Home({
     user: user ? { name: user.name, role: user.role } : null,
   };
 
+  const origin = getOrigin();
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: site.title,
+    url: `${origin}/`,
+    ...(site.description ? { description: site.description } : {}),
+  };
+
   return (
-    <theme.pages.Home
-      {...ctx}
-      posts={listing.posts}
-      page={listing.page}
-      totalPages={listing.totalPages}
-    />
+    <>
+      <JsonLd data={websiteSchema} />
+      <theme.pages.Home
+        {...ctx}
+        posts={listing.posts}
+        page={listing.page}
+        totalPages={listing.totalPages}
+      />
+    </>
   );
 }

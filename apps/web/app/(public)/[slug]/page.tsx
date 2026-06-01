@@ -11,6 +11,7 @@ import {
 } from "@/lib/db";
 import { readPostBody } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth";
+import { JsonLd } from "@/components/JsonLd";
 import { getCanonicalUrl } from "@/lib/seo";
 
 export const runtime = "edge";
@@ -106,5 +107,46 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     user: user ? { name: user.name, role: user.role } : null,
   };
 
-  return <theme.pages.Post {...ctx} post={post} />;
+  const origin = getOrigin();
+  const postUrl = `${origin}/${result.row.slug}/`;
+  const coverUrl = result.row.cover_key
+    ? `${origin}/api/media/${result.row.cover_key}`
+    : undefined;
+  const logoUrl = site.logo_key ? `${origin}/api/media/${site.logo_key}` : undefined;
+  const datePublished = new Date(result.row.published_at * 1000).toISOString();
+  const dateModified = new Date(result.row.updated_at * 1000).toISOString();
+
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: result.row.title.slice(0, 110),
+    description: result.row.excerpt ?? undefined,
+    ...(coverUrl ? { image: coverUrl } : {}),
+    datePublished,
+    dateModified,
+    author: { "@type": "Person", name: result.row.author_name },
+    publisher: {
+      "@type": "Organization",
+      name: site.title,
+      ...(logoUrl ? { logo: { "@type": "ImageObject", url: logoUrl } } : {}),
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${origin}/` },
+      { "@type": "ListItem", position: 2, name: result.row.title, item: postUrl },
+    ],
+  };
+
+  return (
+    <>
+      <JsonLd data={articleSchema} />
+      <JsonLd data={breadcrumbSchema} />
+      <theme.pages.Post {...ctx} post={post} />
+    </>
+  );
 }
