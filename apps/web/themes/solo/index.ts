@@ -2,6 +2,7 @@ import type { Theme } from "../theme.types";
 import HomePage from "./pages/HomePage";
 import PostPage from "./pages/PostPage";
 import TagPage from "./pages/TagPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import Layout from "./components/Layout";
 
 // Solo — a newsletter-style, single-column reading theme.
@@ -22,7 +23,7 @@ const theme: Theme = {
     version: "0.1.0",
     apiVersion: 1,
   },
-  pages: { Home: HomePage, Post: PostPage, Tag: TagPage },
+  pages: { Home: HomePage, Post: PostPage, Tag: TagPage, NotFound: NotFoundPage },
   Layout,
 };
 

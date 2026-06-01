@@ -98,6 +98,7 @@ export type Theme = {
     Home: ComponentType<HomePageProps>;
     Post: ComponentType<PostPageProps>;
     Tag: ComponentType<TagPageProps>;
+    NotFound?: ComponentType<ThemeContext>;
   };
   Layout?: ComponentType<LayoutProps>;
   /** Inline CSS to inject in <head>. Use for theme-specific styles. */

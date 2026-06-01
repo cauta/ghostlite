@@ -584,3 +584,32 @@ html[data-theme="dark"] .theme-icon-moon {
     transform: none;
   }
 }
+
+/* ---------- 404 Not Found ---------- */
+
+.theme-not-found {
+  text-align: center;
+  padding: 6rem 1rem;
+}
+.theme-not-found-code {
+  font-size: 6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--t-accent);
+  margin: 0 0 0.25rem;
+}
+.theme-not-found-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+.theme-not-found-desc {
+  color: var(--t-fg-muted);
+  margin: 0 0 2rem;
+}
+.theme-not-found-link {
+  display: inline-block;
+  color: var(--t-accent);
+  text-decoration: underline;
+  font-weight: 500;
+}

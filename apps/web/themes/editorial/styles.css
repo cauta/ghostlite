@@ -623,3 +623,28 @@
     transform: none;
   }
 }
+
+/* ---------- 404 Not Found ---------- */
+
+.ed-not-found {
+  text-align: center;
+  padding: 6rem 1rem;
+}
+.ed-not-found-title {
+  font-family: var(--e-serif);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--e-ink);
+  margin: 0.5rem 0 1rem;
+}
+.ed-not-found-desc {
+  color: var(--e-faint);
+  font-size: 1.1rem;
+  margin: 0 0 2rem;
+}
+.ed-not-found-link {
+  display: inline-block;
+  color: var(--e-accent);
+  text-decoration: underline;
+  font-weight: 500;
+}
