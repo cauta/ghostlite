@@ -31,6 +31,11 @@ export default async function SettingsHome() {
           title="SEO"
           desc="Customize robots.txt crawl rules served to search engine bots."
         />
+        <SectionCard
+          href="/admin/settings/injection"
+          title="Code injection"
+          desc="Inject custom CSS, head scripts, or footer scripts into every public page."
+        />
       </div>
     </div>
   );

@@ -53,6 +53,17 @@ export async function getRobotsTxt(db: D1Database): Promise<string | null> {
   return getSetting<string>(db, "robots");
 }
 
+export type InjectionSettings = { headCss: string; headJs: string; footerJs: string };
+
+export async function getInjectionSettings(db: D1Database): Promise<InjectionSettings> {
+  const s = await getSetting<InjectionSettings>(db, "injection");
+  return { headCss: s?.headCss ?? "", headJs: s?.headJs ?? "", footerJs: s?.footerJs ?? "" };
+}
+
+export async function setInjectionSettings(db: D1Database, data: InjectionSettings): Promise<void> {
+  await setSetting(db, "injection", data);
+}
+
 // ----- Posts (public) -----
 
 type PostRow = {
