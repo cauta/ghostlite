@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import type { AdminPostRow } from "@/lib/db";
 
 type Tab = "all" | "draft" | "scheduled" | "published";
+type SortCol = "title" | "author" | "updated";
 
 const VALID_TABS = new Set<Tab>(["all", "draft", "scheduled", "published"]);
 
@@ -16,12 +17,19 @@ const TAB_LABELS: Record<Tab, string> = {
   published: "Published",
 };
 
+function SortIcon({ col, sort }: { col: SortCol; sort: { col: SortCol; dir: "asc" | "desc" } }) {
+  if (sort.col !== col) return <span className="posts-sort-icon inactive">↕</span>;
+  return <span className="posts-sort-icon active">{sort.dir === "asc" ? "↑" : "↓"}</span>;
+}
+
 export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
   const searchParams = useSearchParams();
   const urlStatus = searchParams.get("status") as Tab | null;
   const urlTab: Tab = urlStatus && VALID_TABS.has(urlStatus) ? urlStatus : "all";
   const [manualTab, setManualTab] = useState<Tab | null>(null);
   const tab: Tab = manualTab ?? urlTab;
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<{ col: SortCol; dir: "asc" | "desc" }>({ col: "updated", dir: "desc" });
 
   const counts: Record<Tab, number> = {
     all: posts.length,
@@ -30,7 +38,26 @@ export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
     published: posts.filter((p) => p.status === "published").length,
   };
 
-  const visible = tab === "all" ? posts : posts.filter((p) => p.status === tab);
+  const tabFiltered = tab === "all" ? posts : posts.filter((p) => p.status === tab);
+
+  const searched = query.trim()
+    ? tabFiltered.filter((p) => p.title.toLowerCase().includes(query.trim().toLowerCase()))
+    : tabFiltered;
+
+  const sorted = [...searched].sort((a, b) => {
+    const mul = sort.dir === "asc" ? 1 : -1;
+    if (sort.col === "title") return mul * a.title.localeCompare(b.title);
+    if (sort.col === "author") return mul * (a.author_name ?? "").localeCompare(b.author_name ?? "");
+    if (sort.col === "updated") return mul * (a.updated_at - b.updated_at);
+    return 0;
+  });
+
+  function handleSortClick(col: SortCol) {
+    setSort((prev) => {
+      if (prev.col === col) return { col, dir: prev.dir === "asc" ? "desc" : "asc" };
+      return { col, dir: col === "updated" ? "desc" : "asc" };
+    });
+  }
 
   return (
     <div>
@@ -39,6 +66,21 @@ export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
         <Link href="/admin/posts/new" className="admin-btn primary">
           New post
         </Link>
+      </div>
+
+      {/* Search bar */}
+      <div className="posts-search-bar">
+        <input
+          type="text"
+          className="posts-search-input"
+          placeholder="Search posts…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Escape") setQuery(""); }}
+        />
+        {query.trim() && (
+          <span className="posts-search-count">{sorted.length} of {tabFiltered.length}</span>
+        )}
       </div>
 
       {/* Status filter tabs */}
@@ -57,12 +99,14 @@ export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
         ))}
       </div>
 
-      {visible.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="admin-empty">
-          {tab === "all"
+          {query.trim()
+            ? `No posts matching "${query}".`
+            : tab === "all"
             ? "No posts yet."
             : `No ${TAB_LABELS[tab].toLowerCase()} posts.`}
-          {tab === "all" || tab === "draft" ? (
+          {!query.trim() && (tab === "all" || tab === "draft") ? (
             <>
               {" "}
               <Link href="/admin/posts/new" className="admin-btn primary" style={{ marginTop: 12 }}>
@@ -75,16 +119,28 @@ export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Title</th>
+              <th>
+                <button className="posts-sort-header" onClick={() => handleSortClick("title")}>
+                  Title <SortIcon col="title" sort={sort} />
+                </button>
+              </th>
               {tab === "all" && <th>Status</th>}
-              <th>Author</th>
-              <th>Updated</th>
+              <th>
+                <button className="posts-sort-header" onClick={() => handleSortClick("author")}>
+                  Author <SortIcon col="author" sort={sort} />
+                </button>
+              </th>
+              <th>
+                <button className="posts-sort-header" onClick={() => handleSortClick("updated")}>
+                  Updated <SortIcon col="updated" sort={sort} />
+                </button>
+              </th>
               {/* Extra column: published posts get a live "View" link */}
               <th style={{ width: 64 }}></th>
             </tr>
           </thead>
           <tbody>
-            {visible.map((p) => (
+            {sorted.map((p) => (
               <tr key={p.id}>
                 <td>
                   <Link href={`/admin/posts/${p.id}`}>
