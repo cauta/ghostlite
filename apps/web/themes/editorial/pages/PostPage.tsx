@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { formatDate, isoDate } from "../format";
+import { ShareBar } from "../../shared/ShareBar";
 
-export default function PostPage({ post }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl }: PostPageProps) {
   const primaryTag = post.tags[0] ?? null;
 
   return (
@@ -40,6 +41,14 @@ export default function PostPage({ post }: PostPageProps) {
           </div>
         </footer>
       ) : null}
+
+      <ShareBar
+        url={canonicalUrl}
+        title={post.title}
+        className="ed-share-bar"
+        linkClassName="ed-share-link"
+        copyClassName="ed-share-link"
+      />
     </article>
   );
 }

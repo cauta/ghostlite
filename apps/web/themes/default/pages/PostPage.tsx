@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
+import { ShareBar } from "../../shared/ShareBar";
 
 function fmtDate(unix: number) {
   return new Date(unix * 1000).toLocaleDateString(undefined, {
@@ -9,7 +10,7 @@ function fmtDate(unix: number) {
   });
 }
 
-export default function PostPage({ post }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl }: PostPageProps) {
   return (
     <article className="theme-post">
       <header className="theme-post-header">
@@ -37,6 +38,13 @@ export default function PostPage({ post }: PostPageProps) {
       <div
         className="theme-post-body"
         dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
+      />
+      <ShareBar
+        url={canonicalUrl}
+        title={post.title}
+        className="theme-share-bar"
+        linkClassName="theme-share-link"
+        copyClassName="theme-share-link"
       />
     </article>
   );

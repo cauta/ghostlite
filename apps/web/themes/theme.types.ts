@@ -57,6 +57,8 @@ export type PostPageProps = ThemeContext & {
   post: PostFull;
   /** Distinguishes standalone pages from dated blog posts. Themes may render these differently. */
   pageType?: "post" | "page";
+  /** Absolute canonical URL for this post, e.g. "https://myblog.com/my-post/" */
+  canonicalUrl: string;
 };
 
 export type TagPageProps = ThemeContext & {

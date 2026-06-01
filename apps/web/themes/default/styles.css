@@ -527,6 +527,36 @@ html[data-theme="dark"] .theme-icon-moon {
   font-weight: 600;
 }
 
+/* ---------- Share bar ---------- */
+.theme-share-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 40px 0 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--t-border);
+}
+.theme-share-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--t-radius);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none !important;
+  color: var(--t-fg-muted) !important;
+  background: var(--t-bg-subtle);
+  border: 1px solid var(--t-border);
+  cursor: pointer;
+  transition: background-color 0.15s var(--t-ease), color 0.15s var(--t-ease);
+}
+.theme-share-link:hover {
+  background: var(--t-accent-soft);
+  color: var(--t-accent) !important;
+}
+
 /* ---------- Tag page ---------- */
 .theme-tag-header {
   margin-bottom: 32px;
