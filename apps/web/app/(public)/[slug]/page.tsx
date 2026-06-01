@@ -12,6 +12,7 @@ import {
 import { readPostBody } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth";
 import { JsonLd } from "@/components/JsonLd";
+import { getCanonicalUrl } from "@/lib/seo";
 
 export const runtime = "edge";
 
@@ -51,6 +52,9 @@ export async function generateMetadata({
   return {
     title: result.row.title,
     description,
+    alternates: {
+      canonical: getCanonicalUrl(origin, `/${result.row.slug}/`),
+    },
     openGraph: {
       type: "article",
       title: result.row.title,
