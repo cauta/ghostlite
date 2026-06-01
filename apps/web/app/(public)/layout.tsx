@@ -1,16 +1,17 @@
 import { loadTheme } from "@/themes/loader";
 import { getEnv } from "@/lib/cf";
-import { getActiveThemeName, getSiteSettings } from "@/lib/db";
+import { getActiveThemeName, getSiteSettings, getInjectionSettings } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const env = getEnv();
-  const [themeName, site, user] = await Promise.all([
+  const [themeName, site, user, injection] = await Promise.all([
     getActiveThemeName(env.DB),
     getSiteSettings(env.DB),
     getCurrentUser(),
+    getInjectionSettings(env.DB),
   ]);
   const theme = await loadTheme(themeName);
 
@@ -24,8 +25,31 @@ export default async function PublicLayout({ children }: { children: React.React
     user: user ? { name: user.name, role: user.role } : null,
   };
 
+  const head = (
+    <>
+      {injection.headCss ? <style dangerouslySetInnerHTML={{ __html: injection.headCss }} /> : null}
+      {injection.headJs ? <script dangerouslySetInnerHTML={{ __html: injection.headJs }} /> : null}
+    </>
+  );
+
+  const footer = injection.footerJs ? (
+    <script dangerouslySetInnerHTML={{ __html: injection.footerJs }} />
+  ) : null;
+
   if (theme.Layout) {
-    return <theme.Layout {...ctx}>{children}</theme.Layout>;
+    return (
+      <>
+        {head}
+        <theme.Layout {...ctx}>{children}</theme.Layout>
+        {footer}
+      </>
+    );
   }
-  return <>{children}</>;
+  return (
+    <>
+      {head}
+      {children}
+      {footer}
+    </>
+  );
 }

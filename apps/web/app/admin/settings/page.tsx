@@ -26,6 +26,11 @@ export default async function SettingsHome() {
           title="Email"
           desc="Configure your email provider for invites, notifications, and password resets."
         />
+        <SectionCard
+          href="/admin/settings/injection"
+          title="Code injection"
+          desc="Inject custom CSS, head scripts, or footer scripts into every public page."
+        />
       </div>
     </div>
   );
