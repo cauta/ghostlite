@@ -62,6 +62,7 @@ export default function PostEditor({ post }: { post: Post }) {
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleAt, setScheduleAt] = useState(epochToLocalInput(post.scheduledAt));
@@ -112,6 +113,43 @@ export default function PostEditor({ post }: { post: Post }) {
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
+  function showToast(message: string, href?: string, linkLabel?: string, durationMs = 3000) {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    const existing = document.getElementById("gl-toast");
+    if (existing) existing.remove();
+
+    const el = document.createElement("div");
+    el.id = "gl-toast";
+    el.className = "post-editor-toast";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+
+    const span = document.createElement("span");
+    span.textContent = message;
+    el.appendChild(span);
+
+    if (href) {
+      const a = document.createElement("a");
+      a.href = href;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = "post-editor-toast-link";
+      a.textContent = linkLabel ?? "View";
+      el.appendChild(a);
+    }
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "post-editor-toast-close";
+    btn.setAttribute("aria-label", "Dismiss");
+    btn.textContent = "×";
+    btn.onclick = () => { el.remove(); if (toastTimer.current) clearTimeout(toastTimer.current); };
+    el.appendChild(btn);
+
+    document.body.appendChild(el);
+    toastTimer.current = setTimeout(() => el.remove(), durationMs);
+  }
+
   function handleTitleChange(value: string) {
     update("title", value);
     if (!slugTouched) update("slug", autoSlugFor(value, salt));
@@ -158,6 +196,12 @@ export default function PostEditor({ post }: { post: Post }) {
     [post.id],
   );
 
+  // Clear toast and remove DOM element on unmount.
+  useEffect(() => () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    document.getElementById("gl-toast")?.remove();
+  }, []);
+
   // Autosave drafts/scheduled posts on a 1.5s debounce after edits.
   // Published posts require an explicit "Update" click (Ghost behavior).
   useEffect(() => {
@@ -187,7 +231,8 @@ export default function PostEditor({ post }: { post: Post }) {
       update("status", "published");
       update("publishedAt", Math.floor(Date.now() / 1000));
       setSavedAt(Date.now());
-      startTransition(() => router.refresh());
+      showToast("Post published!", `/${draft.slug}`, "View post");
+      setTimeout(() => startTransition(() => router.refresh()), 3200);
     } catch (e) {
       setError((e as Error).message);
     } finally {
