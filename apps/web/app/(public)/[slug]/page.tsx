@@ -150,7 +150,7 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     <>
       <JsonLd data={articleSchema} />
       <JsonLd data={breadcrumbSchema} />
-      <theme.pages.Post {...ctx} post={post} />
+      <theme.pages.Post {...ctx} post={post} pageType={result.row.type} />
     </>
   );
 }

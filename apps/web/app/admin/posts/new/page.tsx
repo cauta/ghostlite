@@ -7,12 +7,13 @@ import { postBodyKey, writePostBody } from "@/lib/storage";
 
 export const runtime = "edge";
 
-export default async function NewPost() {
+export default async function NewPost({ searchParams }: { searchParams: { type?: string } }) {
   const user = await requireUser();
   const env = getEnv();
 
+  const type = searchParams.type === "page" ? "page" : "post";
   const id = ulid().toLowerCase();
-  const slug = `untitled-${id.slice(-6)}`;
+  const slug = `${type === "page" ? "page" : "untitled"}-${id.slice(-6)}`;
   const bodyKey = postBodyKey(id);
 
   await writePostBody(env.R2, bodyKey, "<p></p>");
@@ -23,6 +24,7 @@ export default async function NewPost() {
     excerpt: "",
     bodyKey,
     authorId: user.id,
+    type,
   });
 
   redirect(`/admin/posts/${id}`);
