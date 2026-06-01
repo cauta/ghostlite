@@ -49,6 +49,10 @@ export async function getActiveThemeName(db: D1Database): Promise<string> {
   return (await getThemeSettings(db)).active;
 }
 
+export async function getRobotsTxt(db: D1Database): Promise<string | null> {
+  return getSetting<string>(db, "robots");
+}
+
 // ----- Posts (public) -----
 
 type PostRow = {
@@ -59,13 +63,17 @@ type PostRow = {
   cover_key: string | null;
   body_key: string;
   published_at: number;
+  updated_at: number;
   author_id: string;
   author_name: string;
   author_avatar: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
 };
 
 const PUBLIC_POST_COLUMNS = `
-  p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at,
+  p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key, p.published_at, p.updated_at,
+  p.seo_title, p.seo_description,
   u.id   as author_id,
   u.name as author_name,
   u.avatar_key as author_avatar
@@ -257,10 +265,13 @@ export async function getPostById(
   author_id: string;
   scheduled_at: number | null;
   published_at: number | null;
+  seo_title: string | null;
+  seo_description: string | null;
 } | null> {
   return await db
     .prepare(
-      `SELECT id, slug, title, excerpt, cover_key, body_key, status, author_id, scheduled_at, published_at
+      `SELECT id, slug, title, excerpt, cover_key, body_key, status, author_id, scheduled_at, published_at,
+              seo_title, seo_description
        FROM posts WHERE id = ?`,
     )
     .bind(id)
@@ -305,6 +316,20 @@ export async function updateTag(
 /** Delete a tag by ID. post_tags rows are removed via ON DELETE CASCADE. */
 export async function deleteTag(db: D1Database, id: string): Promise<void> {
   await db.prepare("DELETE FROM tags WHERE id = ?").bind(id).run();
+}
+
+/** Create a new tag. Throws on duplicate slug (D1 UNIQUE constraint). */
+export async function createTag(
+  db: D1Database,
+  name: string,
+  slug: string,
+): Promise<TagWithCount> {
+  const id = crypto.randomUUID().replace(/-/g, "");
+  await db
+    .prepare("INSERT INTO tags (id, name, slug) VALUES (?, ?, ?)")
+    .bind(id, name, slug)
+    .run();
+  return { id, name, slug, postCount: 0 };
 }
 
 export async function getPostTags(db: D1Database, postId: string): Promise<Tag[]> {
@@ -386,6 +411,8 @@ export async function updatePost(
     status: "draft" | "scheduled" | "published";
     publishedAt: number | null;
     scheduledAt: number | null;
+    seoTitle: string | null;
+    seoDescription: string | null;
   }>,
 ): Promise<void> {
   const sets: string[] = [];
@@ -398,6 +425,8 @@ export async function updatePost(
     status: "status",
     publishedAt: "published_at",
     scheduledAt: "scheduled_at",
+    seoTitle: "seo_title",
+    seoDescription: "seo_description",
   };
   for (const [k, v] of Object.entries(patch)) {
     if (v === undefined) continue;
@@ -431,6 +460,11 @@ export async function getAllPublishedPostSlugs(db: D1Database): Promise<PostSlug
     )
     .all<PostSlugRow>();
   return (res.results as PostSlugRow[]) ?? [];
+}
+
+export async function countTags(db: D1Database): Promise<number> {
+  const res = await db.prepare("SELECT COUNT(*) as c FROM tags").first<{ c: number }>();
+  return res?.c ?? 0;
 }
 
 /** Slugs of tags that have at least one published post — for sitemap.xml. */

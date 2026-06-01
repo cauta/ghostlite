@@ -1,31 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-type SiteSettings = { title: string; description: string; logo_key: string | null };
+const DEFAULT_HINT = `User-agent: *\nAllow: /\nDisallow: /admin/\n\nSitemap: https://your-site.com/sitemap.xml`;
 
-export default function SiteSettingsForm({ initial }: { initial: SiteSettings }) {
-  const [title, setTitle] = useState(initial.title);
-  const [description, setDescription] = useState(initial.description);
+export default function SeoSettingsForm({ initialRobots }: { initialRobots: string | null }) {
+  const [robots, setRobots] = useState(initialRobots ?? "");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
-
-  useEffect(() => {
-    if (msg?.kind !== "ok") return;
-    const t = setTimeout(() => setMsg(null), 3000);
-    return () => clearTimeout(t);
-  }, [msg]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
     try {
-      const res = await fetch("/api/settings/site", {
+      const res = await fetch("/api/settings/seo", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description }),
+        body: JSON.stringify({ robots }),
       });
       if (!res.ok) throw new Error(((await res.json()) as { error?: string }).error ?? "Save failed");
       setMsg({ kind: "ok", text: "Saved." });
@@ -39,7 +32,7 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings })
   return (
     <div>
       <div className="admin-page-header">
-        <h1>Site settings</h1>
+        <h1>SEO settings</h1>
         <Link href="/admin/settings" className="admin-btn">Back</Link>
       </div>
 
@@ -48,16 +41,22 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings })
           <div className={msg.kind === "ok" ? "admin-success" : "admin-error"}>{msg.text}</div>
         ) : null}
         <div>
-          <label htmlFor="title">Site title</label>
-          <input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        </div>
-        <div>
-          <label htmlFor="description">Description</label>
-          <input
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Shown in headers and meta tags"
+          <label htmlFor="robots">robots.txt override</label>
+          <p style={{ fontSize: 13, color: "#6b6b6b", margin: "4px 0 8px" }}>
+            Leave blank to use the default (allows all crawlers, blocks /admin/, links to sitemap).
+            The file is served at{" "}
+            <a href="/robots.txt" target="_blank" rel="noopener noreferrer">
+              /robots.txt
+            </a>
+            .
+          </p>
+          <textarea
+            id="robots"
+            value={robots}
+            onChange={(e) => setRobots(e.target.value)}
+            placeholder={DEFAULT_HINT}
+            rows={10}
+            style={{ fontFamily: "monospace", fontSize: 13 }}
           />
         </div>
         <div>

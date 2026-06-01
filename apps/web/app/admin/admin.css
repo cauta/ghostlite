@@ -680,6 +680,75 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
   justify-content: center;
 }
 
+/* ── Quick-draft bar ────────────────────────────────────────────────────── */
+
+.quick-draft {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.quick-draft-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--a-border);
+  border-radius: var(--a-radius);
+  font-size: 15px;
+  font-family: inherit;
+  background: var(--a-surface);
+  color: var(--a-fg);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.quick-draft-input:focus {
+  border-color: var(--a-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--a-accent) 15%, transparent);
+}
+
+.quick-draft-input::placeholder {
+  color: var(--a-fg-muted);
+}
+
+.quick-draft-btn {
+  white-space: nowrap;
+  min-width: 90px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-draft-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: qdSpin 0.6s linear infinite;
+}
+
+@keyframes qdSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Dashboard stat cards ───────────────────────────────────────────────── */
+
+.stat-card {
+  display: block;
+  background: var(--a-surface);
+  border: 1px solid var(--a-border);
+  border-radius: var(--a-radius);
+  padding: 20px;
+  color: var(--a-fg);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.stat-card:hover {
+  border-color: #c7c7c7;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
 /* ── Tags page ─────────────────────────────────────────────────────────── */
 
 /* Compact text input that sits flush inside a table cell during inline editing */
@@ -834,4 +903,46 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
 .posts-view-link:hover {
   opacity: 1;
   text-decoration: underline;
+}
+
+/* Publish success toast */
+.post-editor-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #166534;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: var(--a-radius);
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  z-index: 200;
+  animation: toast-in 0.2s ease;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.post-editor-toast-link {
+  color: #bbf7d0;
+  text-decoration: underline;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.post-editor-toast-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+.post-editor-toast-close:hover {
+  opacity: 1;
 }

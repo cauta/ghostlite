@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Provider = "none" | "resend" | "mailgun" | "sendgrid";
 
@@ -24,6 +24,12 @@ export default function EmailSettingsForm({ initial }: { initial: Initial }) {
   );
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    if (msg?.kind !== "ok") return;
+    const t = setTimeout(() => setMsg(null), 3000);
+    return () => clearTimeout(t);
+  }, [msg]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();

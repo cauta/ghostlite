@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { AdminPostRow } from "@/lib/db";
 
 type Tab = "all" | "draft" | "scheduled" | "published";
 type SortCol = "title" | "author" | "updated";
+
+const VALID_TABS = new Set<Tab>(["all", "draft", "scheduled", "published"]);
 
 const TAB_LABELS: Record<Tab, string> = {
   all: "All",
@@ -20,7 +23,11 @@ function SortIcon({ col, sort }: { col: SortCol; sort: { col: SortCol; dir: "asc
 }
 
 export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
-  const [tab, setTab] = useState<Tab>("all");
+  const searchParams = useSearchParams();
+  const urlStatus = searchParams.get("status") as Tab | null;
+  const urlTab: Tab = urlStatus && VALID_TABS.has(urlStatus) ? urlStatus : "all";
+  const [manualTab, setManualTab] = useState<Tab | null>(null);
+  const tab: Tab = manualTab ?? urlTab;
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<{ col: SortCol; dir: "asc" | "desc" }>({ col: "updated", dir: "desc" });
 
@@ -84,7 +91,7 @@ export default function PostsListClient({ posts }: { posts: AdminPostRow[] }) {
             role="tab"
             aria-selected={tab === t}
             className={`posts-filter-tab${tab === t ? " active" : ""}`}
-            onClick={() => setTab(t)}
+            onClick={() => setManualTab(t)}
           >
             {TAB_LABELS[t]}
             <span className="posts-filter-count">{counts[t]}</span>

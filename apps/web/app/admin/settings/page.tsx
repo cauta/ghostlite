@@ -26,6 +26,11 @@ export default async function SettingsHome() {
           title="Email"
           desc="Configure your email provider for invites, notifications, and password resets."
         />
+        <SectionCard
+          href="/admin/settings/seo"
+          title="SEO"
+          desc="Customize robots.txt crawl rules served to search engine bots."
+        />
       </div>
     </div>
   );
