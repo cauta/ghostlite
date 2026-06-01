@@ -17,6 +17,8 @@ type PatchBody = {
   scheduledAt?: number | null;
   status?: "draft" | "scheduled";
   tags?: string[];
+  seoTitle?: string | null;
+  seoDescription?: string | null;
 };
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -71,6 +73,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     coverKey: body.coverKey,
     status: body.status,
     scheduledAt: body.scheduledAt,
+    seoTitle: body.seoTitle,
+    seoDescription: body.seoDescription,
   });
 
   if (Array.isArray(body.tags)) {
