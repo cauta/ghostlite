@@ -185,7 +185,7 @@ export async function getRelatedPosts(
               COUNT(pt2.tag_id) AS shared_tags
        FROM post_tags pt1
        JOIN post_tags pt2 ON pt1.tag_id = pt2.tag_id AND pt2.post_id != pt1.post_id
-       JOIN posts p ON p.id = pt2.post_id AND p.status = 'published' AND p.published_at <= unixepoch()
+       JOIN posts p ON p.id = pt2.post_id AND p.status = 'published' AND p.published_at <= unixepoch() AND p.type = 'post'
        JOIN users u ON u.id = p.author_id
        WHERE pt1.post_id = ?
        GROUP BY p.id

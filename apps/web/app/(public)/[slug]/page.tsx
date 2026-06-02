@@ -89,7 +89,7 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     getSiteSettingsCached(env.DB),
     readPostBody(env.R2, result.row.body_key),
     getCurrentUser(),
-    getRelatedPosts(env.DB, result.row.id, 3),
+    result.row.type === 'post' ? getRelatedPosts(env.DB, result.row.id, 3) : Promise.resolve([]),
   ]);
   const theme = await loadTheme(themeName);
 
