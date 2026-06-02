@@ -597,3 +597,33 @@
   .sl-header-inner { gap: 12px; }
   .sl-nav { gap: 14px; }
 }
+
+/* ---------- 404 Not Found ---------- */
+
+.sl-not-found {
+  text-align: center;
+  padding: 6rem 1rem;
+}
+.sl-not-found-code {
+  font-family: var(--sl-sans);
+  font-size: 6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--sl-accent);
+  margin: 0 0 0.25rem;
+}
+.sl-not-found-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+}
+.sl-not-found-desc {
+  color: var(--sl-fg-faint);
+  margin: 0 0 2rem;
+}
+.sl-not-found-link {
+  display: inline-block;
+  color: var(--sl-accent);
+  text-decoration: underline;
+  font-weight: 500;
+}
