@@ -643,3 +643,24 @@ html[data-theme="dark"] .theme-icon-moon {
   text-decoration: underline;
   font-weight: 500;
 }
+
+/* ---------- Related posts ---------- */
+.theme-related {
+  max-width: 900px;
+  margin: 3rem auto 0;
+  padding: 2rem 1.5rem 0;
+  border-top: 1px solid var(--border);
+}
+.theme-related-heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+.theme-related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}

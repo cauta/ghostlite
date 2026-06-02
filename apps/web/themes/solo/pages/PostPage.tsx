@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { ShareBar } from "../../shared/ShareBar";
+import PostListItem from "../components/PostListItem";
 
 // Formats a Unix epoch (seconds) into a human-readable date string.
 function longDate(ts: number): string {
@@ -25,7 +26,7 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export default function PostPage({ post, canonicalUrl }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageProps) {
   const primaryTag = post.tags[0] ?? null;
 
   return (
@@ -99,6 +100,17 @@ export default function PostPage({ post, canonicalUrl }: PostPageProps) {
           copyClassName="sl-share-link"
         />
       </article>
+
+      {relatedPosts.length > 0 ? (
+        <section className="sl-related">
+          <h2 className="sl-related-heading">You might also like</h2>
+          <ul className="sl-post-list sl-related-list">
+            {relatedPosts.map((p) => (
+              <PostListItem key={p.id} post={p} />
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

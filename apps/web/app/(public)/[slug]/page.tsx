@@ -6,6 +6,7 @@ import { getEnv, getOrigin } from "@/lib/cf";
 import {
   getActiveThemeName,
   getPublishedPostBySlug,
+  getRelatedPosts,
   getSiteSettings,
   rowToPostFull,
 } from "@/lib/db";
@@ -83,11 +84,12 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
   const result = await getPublishedPostBySlugCached(env.DB, params.slug);
   if (!result) notFound();
 
-  const [themeName, site, body, user] = await Promise.all([
+  const [themeName, site, body, user, relatedPosts] = await Promise.all([
     getActiveThemeName(env.DB),
     getSiteSettingsCached(env.DB),
     readPostBody(env.R2, result.row.body_key),
     getCurrentUser(),
+    getRelatedPosts(env.DB, result.row.id, 3),
   ]);
   const theme = await loadTheme(themeName);
 
@@ -150,7 +152,7 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     <>
       <JsonLd data={articleSchema} />
       <JsonLd data={breadcrumbSchema} />
-      <theme.pages.Post {...ctx} post={post} pageType={result.row.type} canonicalUrl={postUrl} />
+      <theme.pages.Post {...ctx} post={post} pageType={result.row.type} canonicalUrl={postUrl} relatedPosts={relatedPosts} />
     </>
   );
 }

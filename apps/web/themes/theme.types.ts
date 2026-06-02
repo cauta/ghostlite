@@ -59,6 +59,8 @@ export type PostPageProps = ThemeContext & {
   pageType?: "post" | "page";
   /** Absolute canonical URL for this post, e.g. "https://myblog.com/my-post/" */
   canonicalUrl: string;
+  /** Up to 3 posts sharing tags with the current post. Empty array when none exist. */
+  relatedPosts: PostSummary[];
 };
 
 export type TagPageProps = ThemeContext & {

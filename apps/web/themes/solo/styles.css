@@ -627,3 +627,24 @@
   text-decoration: underline;
   font-weight: 500;
 }
+
+/* ---------- Related posts ---------- */
+.sl-related {
+  margin: 3rem 0 0;
+  padding: 2rem 0 0;
+  border-top: 1px solid var(--sl-border);
+}
+.sl-related-heading {
+  font-family: var(--sl-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sl-fg-faint);
+  margin-bottom: 1rem;
+}
+.sl-related-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
