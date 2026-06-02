@@ -39,6 +39,8 @@ import { Attachment, RichTextAttachment } from "reactjs-tiptap-editor/attachment
 import { Indent, RichTextIndent } from "reactjs-tiptap-editor/indent";
 import { LineHeight, RichTextLineHeight } from "reactjs-tiptap-editor/lineheight";
 import { SlashCommand, SlashCommandList } from "reactjs-tiptap-editor/slashcommand";
+import { EmbedExtension } from "./EmbedNode";
+import { EmbedButton } from "./EmbedButton";
 
 import { createLowlight } from "lowlight";
 import bash from "highlight.js/lib/languages/bash";
@@ -114,6 +116,7 @@ const extensions = [
   Video.configure({ upload: uploadToR2 }),
   Attachment.configure({ upload: uploadToR2 }),
   SlashCommand,
+  EmbedExtension,
 ];
 
 interface EditorStats {
@@ -197,6 +200,7 @@ export default function TiptapEditor({ value, onChange }: Props) {
           <RichTextImage />
           <RichTextVideo />
           <RichTextAttachment />
+          <EmbedButton editor={editor} />
           <RichTextBlockquote />
           <RichTextHorizontalRule />
           <RichTextCode />
