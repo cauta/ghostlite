@@ -544,6 +544,37 @@
   color: var(--e-accent) !important;
 }
 
+/* ---------- Share bar ---------- */
+.ed-share-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 48px 0 0;
+  padding-top: 28px;
+  border-top: 1px solid var(--e-line-strong);
+}
+.ed-share-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--e-sans);
+  text-decoration: none !important;
+  color: var(--e-muted) !important;
+  background: transparent;
+  border: 1px solid var(--e-line-strong);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.ed-share-link:hover {
+  border-color: var(--e-accent);
+  color: var(--e-accent) !important;
+}
+
 /* ---------- Tag page ---------- */
 .ed-tag-page {
   margin-top: 8px;

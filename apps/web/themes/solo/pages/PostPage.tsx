@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
+import { ShareBar } from "../../shared/ShareBar";
 
 // Formats a Unix epoch (seconds) into a human-readable date string.
 function longDate(ts: number): string {
@@ -24,7 +25,7 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export default function PostPage({ post }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl }: PostPageProps) {
   const primaryTag = post.tags[0] ?? null;
 
   return (
@@ -89,6 +90,14 @@ export default function PostPage({ post }: PostPageProps) {
             </div>
           </footer>
         ) : null}
+
+        <ShareBar
+          url={canonicalUrl}
+          title={post.title}
+          className="sl-share-bar"
+          linkClassName="sl-share-link"
+          copyClassName="sl-share-link"
+        />
       </article>
     </div>
   );

@@ -497,6 +497,38 @@
   text-decoration: none;
 }
 
+/* ---------- Share bar ---------- */
+.sl-share-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 48px 0 0;
+  padding-top: 32px;
+  border-top: 1px solid var(--sl-border);
+}
+.sl-share-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--sl-sans);
+  text-decoration: none !important;
+  color: var(--sl-muted) !important;
+  background: transparent;
+  border: 1px solid var(--sl-border);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.sl-share-link:hover {
+  background: var(--sl-tag-bg);
+  color: var(--sl-tag-fg) !important;
+  border-color: transparent;
+}
+
 /* ---------- Tag page ---------- */
 
 .sl-tag-header {
