@@ -946,3 +946,153 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
 .post-editor-toast-close:hover {
   opacity: 1;
 }
+
+/* ===== Embed toolbar button ===== */
+.tiptap-embed-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--a-fg);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.tiptap-embed-btn:hover {
+  background: var(--a-border);
+  border-color: var(--a-border);
+}
+
+/* ===== Embed dialog ===== */
+.embed-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.embed-dialog {
+  background: var(--a-surface);
+  border: 1px solid var(--a-border);
+  border-radius: var(--a-radius);
+  padding: 24px;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+.embed-dialog-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.embed-dialog-hint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--a-fg-muted);
+}
+.embed-dialog-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--a-border);
+  border-radius: var(--a-radius);
+  background: var(--a-bg);
+  color: var(--a-fg);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.embed-dialog-input:focus {
+  outline: none;
+  border-color: var(--a-accent);
+}
+.embed-dialog-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--a-danger);
+}
+.embed-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ===== Embed NodeView (editor) ===== */
+.gl-embed-node {
+  margin: 16px 0;
+  position: relative;
+}
+.gl-embed-editor-shell {
+  border: 1px solid var(--a-border);
+  border-radius: var(--a-radius);
+  overflow: hidden;
+  position: relative;
+  background: var(--a-bg);
+}
+.gl-embed-badge {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  z-index: 2;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+.gl-embed-delete {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  z-index: 2;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.gl-embed-delete:hover {
+  background: rgba(200, 30, 30, 0.8);
+}
+.gl-embed-responsive {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  overflow: hidden;
+}
+.gl-embed-responsive iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.gl-embed-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.gl-embed-link-preview {
+  display: block;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--a-accent);
+  text-decoration: underline;
+}
