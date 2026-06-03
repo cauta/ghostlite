@@ -170,6 +170,33 @@ export function rowToPostFull(r: PostRow, bodyHtml: string, tags: Tag[]): PostFu
   return { ...rowToSummary(r), bodyHtml, tags };
 }
 
+type RelatedPostRow = PostRow & { shared_tags: number };
+
+export async function getRelatedPosts(
+  db: D1Database,
+  postId: string,
+  limit = 3,
+): Promise<PostSummary[]> {
+  const res = await db
+    .prepare(
+      `SELECT p.id, p.slug, p.title, p.excerpt, p.cover_key, p.body_key,
+              p.published_at, p.updated_at, p.seo_title, p.seo_description, p.type,
+              u.id as author_id, u.name as author_name, u.avatar_key as author_avatar,
+              COUNT(pt2.tag_id) AS shared_tags
+       FROM post_tags pt1
+       JOIN post_tags pt2 ON pt1.tag_id = pt2.tag_id AND pt2.post_id != pt1.post_id
+       JOIN posts p ON p.id = pt2.post_id AND p.status = 'published' AND p.published_at <= unixepoch() AND p.type = 'post'
+       JOIN users u ON u.id = p.author_id
+       WHERE pt1.post_id = ?
+       GROUP BY p.id
+       ORDER BY shared_tags DESC, p.published_at DESC
+       LIMIT ?`,
+    )
+    .bind(postId, limit)
+    .all<RelatedPostRow>();
+  return (res.results as unknown as RelatedPostRow[]).map(rowToSummary);
+}
+
 export async function listPostsByTag(
   db: D1Database,
   tagSlug: string,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { ShareBar } from "../../shared/ShareBar";
+import PostCard from "../components/PostCard";
 
 function fmtDate(unix: number) {
   return new Date(unix * 1000).toLocaleDateString(undefined, {
@@ -10,42 +11,54 @@ function fmtDate(unix: number) {
   });
 }
 
-export default function PostPage({ post, canonicalUrl }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageProps) {
   return (
-    <article className="theme-post">
-      <header className="theme-post-header">
-        <h1>{post.title}</h1>
-        <div className="theme-post-meta">
-          <span>{post.author.name}</span>
-          <span aria-hidden>·</span>
-          <time dateTime={new Date(post.publishedAt * 1000).toISOString()}>
-            {fmtDate(post.publishedAt)}
-          </time>
-        </div>
-        {post.tags.length > 0 ? (
-          <div className="theme-post-tags">
-            {post.tags.map((t) => (
-              <Link key={t.slug} href={`/tag/${t.slug}`} className="theme-tag">
-                {t.name}
-              </Link>
+    <>
+      <article className="theme-post">
+        <header className="theme-post-header">
+          <h1>{post.title}</h1>
+          <div className="theme-post-meta">
+            <span>{post.author.name}</span>
+            <span aria-hidden>·</span>
+            <time dateTime={new Date(post.publishedAt * 1000).toISOString()}>
+              {fmtDate(post.publishedAt)}
+            </time>
+          </div>
+          {post.tags.length > 0 ? (
+            <div className="theme-post-tags">
+              {post.tags.map((t) => (
+                <Link key={t.slug} href={`/tag/${t.slug}`} className="theme-tag">
+                  {t.name}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+          {post.coverUrl ? (
+            <img src={post.coverUrl} alt="" className="theme-post-cover-full" />
+          ) : null}
+        </header>
+        <div
+          className="theme-post-body"
+          dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
+        />
+        <ShareBar
+          url={canonicalUrl}
+          title={post.title}
+          className="theme-share-bar"
+          linkClassName="theme-share-link"
+          copyClassName="theme-share-link"
+        />
+      </article>
+      {relatedPosts.length > 0 ? (
+        <section className="theme-related">
+          <h2 className="theme-related-heading">You might also like</h2>
+          <div className="theme-post-list theme-related-grid">
+            {relatedPosts.map((p) => (
+              <PostCard key={p.id} post={p} />
             ))}
           </div>
-        ) : null}
-        {post.coverUrl ? (
-          <img src={post.coverUrl} alt="" className="theme-post-cover-full" />
-        ) : null}
-      </header>
-      <div
-        className="theme-post-body"
-        dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
-      />
-      <ShareBar
-        url={canonicalUrl}
-        title={post.title}
-        className="theme-share-bar"
-        linkClassName="theme-share-link"
-        copyClassName="theme-share-link"
-      />
-    </article>
+        </section>
+      ) : null}
+    </>
   );
 }
