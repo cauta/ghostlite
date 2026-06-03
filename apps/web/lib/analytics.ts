@@ -97,9 +97,3 @@ export async function getTopPosts(
     .sort((a, b) => b.views30d - a.views30d)
     .slice(0, limit);
 }
-
-/** Sum all 30-day view counts across all posts. */
-export async function getTotalViews30d(kv: KVNamespace): Promise<number> {
-  const posts = await getTopPosts(kv, 1000);
-  return posts.reduce((acc, p) => acc + p.views30d, 0);
-}

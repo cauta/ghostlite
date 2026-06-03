@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { getEnv } from "@/lib/cf";
-import { getTopPosts, getTotalViews30d } from "@/lib/analytics";
+import { getTopPosts } from "@/lib/analytics";
+import { getPostTitlesBySlugs } from "@/lib/db";
 
 export const runtime = "edge";
 
@@ -8,10 +9,9 @@ export default async function AnalyticsPage() {
   await requireAdmin();
   const env = getEnv();
 
-  const [topPosts, totalViews] = await Promise.all([
-    getTopPosts(env.KV, 10),
-    getTotalViews30d(env.KV),
-  ]);
+  const topPosts = await getTopPosts(env.KV, 10);
+  const totalViews = topPosts.reduce((acc, p) => acc + p.views30d, 0);
+  const titles = await getPostTitlesBySlugs(env.DB, topPosts.map((p) => p.slug));
 
   const maxViews = topPosts[0]?.views30d ?? 1;
 
@@ -55,7 +55,7 @@ export default async function AnalyticsPage() {
                 <td>
                   <a href={`/${p.slug}/`} target="_blank" rel="noreferrer"
                     style={{ color: "inherit" }}>
-                    {p.slug}
+                    {titles[p.slug] ?? p.slug}
                   </a>
                 </td>
                 <td style={{ fontWeight: 600 }}>{p.views30d.toLocaleString()}</td>
