@@ -5,6 +5,7 @@ import { loadTheme } from "@/themes/loader";
 import { getEnv, getOrigin } from "@/lib/cf";
 import {
   getActiveThemeName,
+  listApprovedComments,
   getPublishedPostBySlug,
   getRelatedPosts,
   getSiteSettings,
@@ -84,12 +85,13 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
   const result = await getPublishedPostBySlugCached(env.DB, params.slug);
   if (!result) notFound();
 
-  const [themeName, site, body, user, relatedPosts] = await Promise.all([
+  const [themeName, site, body, user, relatedPosts, commentRows] = await Promise.all([
     getActiveThemeName(env.DB),
     getSiteSettingsCached(env.DB),
     readPostBody(env.R2, result.row.body_key),
     getCurrentUser(),
     result.row.type === 'post' ? getRelatedPosts(env.DB, result.row.id, 3) : Promise.resolve([]),
+    result.row.type === 'post' ? listApprovedComments(env.DB, result.row.id) : Promise.resolve([]),
   ]);
   const theme = await loadTheme(themeName);
 
@@ -152,7 +154,15 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     <>
       <JsonLd data={articleSchema} />
       <JsonLd data={breadcrumbSchema} />
-      <theme.pages.Post {...ctx} post={post} pageType={result.row.type} canonicalUrl={postUrl} relatedPosts={relatedPosts} />
+      <theme.pages.Post
+        {...ctx}
+        post={post}
+        pageType={result.row.type}
+        canonicalUrl={postUrl}
+        relatedPosts={relatedPosts}
+        comments={commentRows.map((c) => ({ id: c.id, authorName: c.author_name, body: c.body, createdAt: c.created_at }))}
+        commentPostUrl={`/api/posts/${result.row.id}/comments`}
+      />
     </>
   );
 }

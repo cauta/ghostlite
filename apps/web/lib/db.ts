@@ -521,3 +521,85 @@ export async function getAllTagsWithPublishedPosts(db: D1Database): Promise<stri
     .all<{ slug: string }>();
   return ((res.results as { slug: string }[]) ?? []).map((r) => r.slug);
 }
+
+// ----- Comments -----
+
+export type CommentRow = {
+  id: string;
+  post_id: string;
+  author_name: string;
+  author_email: string;
+  body: string;
+  status: "pending" | "approved" | "spam";
+  created_at: number;
+};
+
+export async function createComment(
+  db: D1Database,
+  data: { id: string; postId: string; authorName: string; authorEmail: string; body: string },
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO comments (id, post_id, author_name, author_email, body, status, created_at)
+       VALUES (?, ?, ?, ?, ?, 'pending', unixepoch())`,
+    )
+    .bind(data.id, data.postId, data.authorName, data.authorEmail, data.body)
+    .run();
+}
+
+export async function listApprovedComments(db: D1Database, postId: string): Promise<CommentRow[]> {
+  const res = await db
+    .prepare(
+      `SELECT * FROM comments WHERE post_id = ? AND status = 'approved' ORDER BY created_at ASC`,
+    )
+    .bind(postId)
+    .all<CommentRow>();
+  return (res.results as CommentRow[]) ?? [];
+}
+
+export async function listAllComments(
+  db: D1Database,
+  opts: { status?: "pending" | "approved" | "spam" } = {},
+): Promise<(CommentRow & { post_title: string; post_slug: string })[]> {
+  const where = opts.status ? `WHERE c.status = '${opts.status}'` : "";
+  const res = await db
+    .prepare(
+      `SELECT c.*, p.title AS post_title, p.slug AS post_slug
+       FROM comments c
+       JOIN posts p ON p.id = c.post_id
+       ${where}
+       ORDER BY c.created_at DESC
+       LIMIT 200`,
+    )
+    .all<CommentRow & { post_title: string; post_slug: string }>();
+  return (res.results as (CommentRow & { post_title: string; post_slug: string })[]) ?? [];
+}
+
+export async function getAdminEmail(db: D1Database): Promise<string | null> {
+  const row = await db
+    .prepare(`SELECT email FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1`)
+    .first<{ email: string }>();
+  return row?.email ?? null;
+}
+
+export async function countPendingComments(db: D1Database): Promise<number> {
+  const res = await db
+    .prepare(`SELECT COUNT(*) as c FROM comments WHERE status = 'pending'`)
+    .first<{ c: number }>();
+  return res?.c ?? 0;
+}
+
+export async function updateCommentStatus(
+  db: D1Database,
+  id: string,
+  status: "pending" | "approved" | "spam",
+): Promise<void> {
+  await db
+    .prepare(`UPDATE comments SET status = ? WHERE id = ?`)
+    .bind(status, id)
+    .run();
+}
+
+export async function deleteComment(db: D1Database, id: string): Promise<void> {
+  await db.prepare(`DELETE FROM comments WHERE id = ?`).bind(id).run();
+}
