@@ -561,18 +561,31 @@ export async function listAllComments(
   db: D1Database,
   opts: { status?: "pending" | "approved" | "spam" } = {},
 ): Promise<(CommentRow & { post_title: string; post_slug: string })[]> {
-  const where = opts.status ? `WHERE c.status = '${opts.status}'` : "";
+  type Row = CommentRow & { post_title: string; post_slug: string };
+  if (opts.status) {
+    const res = await db
+      .prepare(
+        `SELECT c.*, p.title AS post_title, p.slug AS post_slug
+         FROM comments c
+         JOIN posts p ON p.id = c.post_id
+         WHERE c.status = ?
+         ORDER BY c.created_at DESC
+         LIMIT 200`,
+      )
+      .bind(opts.status)
+      .all<Row>();
+    return (res.results as Row[]) ?? [];
+  }
   const res = await db
     .prepare(
       `SELECT c.*, p.title AS post_title, p.slug AS post_slug
        FROM comments c
        JOIN posts p ON p.id = c.post_id
-       ${where}
        ORDER BY c.created_at DESC
        LIMIT 200`,
     )
-    .all<CommentRow & { post_title: string; post_slug: string }>();
-  return (res.results as (CommentRow & { post_title: string; post_slug: string })[]) ?? [];
+    .all<Row>();
+  return (res.results as Row[]) ?? [];
 }
 
 export async function getAdminEmail(db: D1Database): Promise<string | null> {

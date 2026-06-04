@@ -57,6 +57,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     body: commentBody,
   });
 
+  function escHtml(s: string) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
   // Fire-and-forget admin notification email
   try {
     const adminEmail = await getAdminEmail(env.DB);
@@ -64,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       sendEmail(env, {
         to: adminEmail,
         subject: `New comment on "${post.title}"`,
-        html: `<p><strong>${authorName}</strong> (${authorEmail}) wrote:</p><blockquote>${commentBody.replace(/\n/g, "<br>")}</blockquote><p><a href="${req.nextUrl.origin}/admin/comments">Approve or reject</a></p>`,
+        html: `<p><strong>${escHtml(authorName)}</strong> (${escHtml(authorEmail)}) wrote:</p><blockquote>${escHtml(commentBody).replace(/\n/g, "<br>")}</blockquote><p><a href="${req.nextUrl.origin}/admin/comments">Approve or reject</a></p>`,
         text: `${authorName} (${authorEmail}) wrote:\n\n${commentBody}\n\nApprove or reject: ${req.nextUrl.origin}/admin/comments`,
       }).catch(() => {});
     }
