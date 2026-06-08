@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 import { loadTheme } from "@/themes/loader";
 import { getEnv, getOrigin } from "@/lib/cf";
 import {
@@ -14,6 +15,7 @@ import { readPostBody } from "@/lib/storage";
 import { getCurrentUser } from "@/lib/auth";
 import { JsonLd } from "@/components/JsonLd";
 import { getCanonicalUrl } from "@/lib/seo";
+import { incrementPageView } from "@/lib/analytics";
 
 export const runtime = "edge";
 
@@ -100,6 +102,17 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     bodyHtml = body;
     // Fire and forget; don't block render on cache write
     env.KV.put(cacheKey, bodyHtml, { expirationTtl: 3600 }).catch(() => {});
+  }
+
+  // Increment view counter server-side, skip for logged-in users (admin previews)
+  if (!user) {
+    const kvPromise = incrementPageView(env.KV, result.row.slug);
+    const waitUntil = getRequestContext().ctx?.waitUntil?.bind(getRequestContext().ctx);
+    if (waitUntil) {
+      waitUntil(kvPromise);
+    } else {
+      kvPromise.catch(() => {});
+    }
   }
 
   const post = rowToPostFull(result.row, bodyHtml, result.tags);
