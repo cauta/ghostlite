@@ -56,6 +56,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </span>
             )}
           </Link>
+          {link("/admin/analytics", "Analytics")}
           {link("/admin/settings", "Settings")}
           {link("/", "View site →")}
         </nav>

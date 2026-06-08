@@ -509,6 +509,20 @@ export async function countTags(db: D1Database): Promise<number> {
   return res?.c ?? 0;
 }
 
+/** Map of slug → title for the given slugs. Missing slugs are omitted. */
+export async function getPostTitlesBySlugs(
+  db: D1Database,
+  slugs: string[],
+): Promise<Record<string, string>> {
+  if (!slugs.length) return {};
+  const placeholders = slugs.map(() => "?").join(",");
+  const res = await db
+    .prepare(`SELECT slug, title FROM posts WHERE slug IN (${placeholders})`)
+    .bind(...slugs)
+    .all<{ slug: string; title: string }>();
+  return Object.fromEntries((res.results ?? []).map((r) => [r.slug, r.title]));
+}
+
 /** Slugs of tags that have at least one published post — for sitemap.xml. Excludes pages. */
 export async function getAllTagsWithPublishedPosts(db: D1Database): Promise<string[]> {
   const res = await db
