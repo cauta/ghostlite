@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { getCurrentUser } from "@/lib/auth";
+import { getEnv } from "@/lib/cf";
+import { countPendingComments } from "@/lib/db";
 
 export const runtime = "edge";
 
@@ -12,6 +14,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (path.startsWith("/admin/login") || !user) {
     return <>{children}</>;
   }
+
+  const env = getEnv();
+  const pendingComments = await countPendingComments(env.DB);
 
   const link = (href: string, label: string) => {
     // Exact match for root-level routes to avoid /admin matching /admin/posts etc.
@@ -31,6 +36,26 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {link("/admin", "Dashboard")}
           {link("/admin/posts", "Posts")}
           {link("/admin/tags", "Tags")}
+          <Link
+            href="/admin/comments"
+            className={path === "/admin/comments" || path.startsWith("/admin/comments/") ? "active" : ""}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+          >
+            Comments
+            {pendingComments > 0 && (
+              <span style={{
+                background: "#6366f1",
+                color: "#fff",
+                borderRadius: 10,
+                fontSize: 11,
+                padding: "1px 6px",
+                fontWeight: 600,
+                lineHeight: 1.4,
+              }}>
+                {pendingComments}
+              </span>
+            )}
+          </Link>
           {link("/admin/analytics", "Analytics")}
           {link("/admin/settings", "Settings")}
           {link("/", "View site →")}

@@ -11,6 +11,13 @@ import type { ComponentType, ReactNode } from "react";
 
 export type Tag = { slug: string; name: string };
 
+export type Comment = {
+  id: string;
+  authorName: string;
+  body: string;
+  createdAt: number;
+};
+
 export type PostSummary = {
   id: string;
   slug: string;
@@ -61,6 +68,10 @@ export type PostPageProps = ThemeContext & {
   canonicalUrl: string;
   /** Up to 3 posts sharing tags with the current post. Empty array when none exist. */
   relatedPosts: PostSummary[];
+  /** Approved comments for this post. */
+  comments: Comment[];
+  /** Action URL for the comment submission form. */
+  commentPostUrl: string;
 };
 
 export type TagPageProps = ThemeContext & {

@@ -2,9 +2,10 @@ import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { formatDate, isoDate } from "../format";
 import { ShareBar } from "../../shared/ShareBar";
+import { CommentsSection } from "../../shared/CommentsSection";
 import PostCard from "../components/PostCard";
 
-export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts, comments, commentPostUrl, pageType }: PostPageProps) {
   const primaryTag = post.tags[0] ?? null;
 
   return (
@@ -52,6 +53,14 @@ export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageP
           copyClassName="ed-share-link"
         />
       </article>
+      {pageType !== "page" ? (
+        <CommentsSection
+          comments={comments}
+          postUrl={commentPostUrl}
+          className="ed-comments"
+          headingClassName="ed-comments-heading"
+        />
+      ) : null}
       {relatedPosts.length > 0 ? (
         <section className="ed-related">
           <h2 className="ed-related-heading">You might also like</h2>

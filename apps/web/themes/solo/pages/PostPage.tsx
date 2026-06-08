@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { ShareBar } from "../../shared/ShareBar";
+import { CommentsSection } from "../../shared/CommentsSection";
 import PostListItem from "../components/PostListItem";
 
 // Formats a Unix epoch (seconds) into a human-readable date string.
@@ -26,7 +27,7 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts, comments, commentPostUrl, pageType }: PostPageProps) {
   const primaryTag = post.tags[0] ?? null;
 
   return (
@@ -101,6 +102,14 @@ export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageP
         />
       </article>
 
+      {pageType !== "page" ? (
+        <CommentsSection
+          comments={comments}
+          postUrl={commentPostUrl}
+          className="sl-comments"
+          headingClassName="sl-comments-heading"
+        />
+      ) : null}
       {relatedPosts.length > 0 ? (
         <section className="sl-related">
           <h2 className="sl-related-heading">You might also like</h2>

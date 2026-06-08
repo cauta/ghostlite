@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { ShareBar } from "../../shared/ShareBar";
+import { CommentsSection } from "../../shared/CommentsSection";
 import PostCard from "../components/PostCard";
 
 function fmtDate(unix: number) {
@@ -11,7 +12,7 @@ function fmtDate(unix: number) {
   });
 }
 
-export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts, comments, commentPostUrl, pageType }: PostPageProps) {
   return (
     <>
       <article className="theme-post">
@@ -49,6 +50,14 @@ export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageP
           copyClassName="theme-share-link"
         />
       </article>
+      {pageType !== "page" ? (
+        <CommentsSection
+          comments={comments}
+          postUrl={commentPostUrl}
+          className="theme-comments"
+          headingClassName="theme-comments-heading"
+        />
+      ) : null}
       {relatedPosts.length > 0 ? (
         <section className="theme-related">
           <h2 className="theme-related-heading">You might also like</h2>
