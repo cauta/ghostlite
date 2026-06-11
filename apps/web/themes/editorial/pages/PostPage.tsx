@@ -2,13 +2,16 @@ import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { formatDate, isoDate } from "../format";
 import { ShareBar } from "../../shared/ShareBar";
+import { ReadingProgressBar } from "../../shared/ReadingProgressBar";
 import PostCard from "../components/PostCard";
 
-export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts, theme }: PostPageProps) {
+  const showProgress = theme.config.progressBar !== false;
   const primaryTag = post.tags[0] ?? null;
 
   return (
     <>
+      {showProgress && <ReadingProgressBar />}
       <article className="ed-post">
         <header className="ed-post-header">
           {primaryTag ? (

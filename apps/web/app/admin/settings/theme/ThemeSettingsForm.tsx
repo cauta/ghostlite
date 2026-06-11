@@ -19,18 +19,22 @@ const FALLBACK_PREVIEW = { paper: "#ffffff", ink: "#1d1d1f", accent: "#2563eb", 
 export default function ThemeSettingsForm({
   themes,
   active,
+  config,
 }: {
   themes: ThemeManifest[];
   active: string;
+  config: Record<string, unknown>;
 }) {
   const [selected, setSelected] = useState(active);
   const [savedTheme, setSavedTheme] = useState(active);
+  const [progressBar, setProgressBar] = useState(config.progressBar !== false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [premiumModal, setPremiumModal] = useState<ThemeManifest | null>(null);
 
   const selectedTheme = themes.find((t) => t.name === selected);
   const dirty = selected !== savedTheme && selectedTheme?.tier !== "premium";
+  const configDirty = progressBar !== (config.progressBar !== false);
 
   useEffect(() => {
     if (msg?.kind !== "ok") return;
@@ -39,20 +43,36 @@ export default function ThemeSettingsForm({
   }, [msg]);
 
   async function save() {
-    if (selectedTheme?.tier === "premium") return;
     setBusy(true);
     setMsg(null);
     try {
-      const res = await fetch("/api/settings/theme", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme: selected }),
-      });
-      if (!res.ok) {
-        throw new Error(((await res.json()) as { error?: string }).error ?? "Save failed");
+      const tasks: Promise<Response>[] = [];
+      if (dirty && selectedTheme?.tier !== "premium") {
+        tasks.push(
+          fetch("/api/settings/theme", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ theme: selected }),
+          })
+        );
       }
-      setSavedTheme(selected);
-      setMsg({ kind: "ok", text: "Theme updated. Reload your public site to see it." });
+      if (configDirty) {
+        tasks.push(
+          fetch("/api/settings/theme", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ config: { progressBar } }),
+          })
+        );
+      }
+      const results = await Promise.all(tasks);
+      for (const res of results) {
+        if (!res.ok) {
+          throw new Error(((await res.json()) as { error?: string }).error ?? "Save failed");
+        }
+      }
+      if (dirty) setSavedTheme(selected);
+      setMsg({ kind: "ok", text: "Theme settings saved." });
     } catch (e) {
       setMsg({ kind: "err", text: (e as Error).message });
     } finally {
@@ -99,9 +119,21 @@ export default function ThemeSettingsForm({
         ))}
       </div>
 
+      <div style={{ marginTop: 24, borderTop: "1px solid var(--color-border)", paddingTop: 20 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Reading experience</h2>
+        <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={progressBar}
+            onChange={(e) => setProgressBar(e.target.checked)}
+          />
+          <span>Show reading progress bar on post pages</span>
+        </label>
+      </div>
+
       <div style={{ marginTop: 24 }}>
-        <button className="admin-btn primary" onClick={save} disabled={busy || !dirty}>
-          {busy ? "Saving…" : dirty ? "Apply theme" : "Saved"}
+        <button className="admin-btn primary" onClick={save} disabled={busy || (!dirty && !configDirty)}>
+          {busy ? "Saving…" : dirty || configDirty ? "Save changes" : "Saved"}
         </button>
       </div>
 

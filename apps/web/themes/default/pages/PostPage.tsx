@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { ShareBar } from "../../shared/ShareBar";
+import { ReadingProgressBar } from "../../shared/ReadingProgressBar";
 import PostCard from "../components/PostCard";
 
 function fmtDate(unix: number) {
@@ -11,9 +12,11 @@ function fmtDate(unix: number) {
   });
 }
 
-export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts, theme }: PostPageProps) {
+  const showProgress = theme.config.progressBar !== false;
   return (
     <>
+      {showProgress && <ReadingProgressBar />}
       <article className="theme-post">
         <header className="theme-post-header">
           <h1>{post.title}</h1>

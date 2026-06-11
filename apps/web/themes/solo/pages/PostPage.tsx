@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { ShareBar } from "../../shared/ShareBar";
+import { ReadingProgressBar } from "../../shared/ReadingProgressBar";
 import PostListItem from "../components/PostListItem";
 
 // Formats a Unix epoch (seconds) into a human-readable date string.
@@ -26,11 +27,13 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export default function PostPage({ post, canonicalUrl, relatedPosts }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts, theme }: PostPageProps) {
   const primaryTag = post.tags[0] ?? null;
+  const showProgress = theme.config.progressBar !== false;
 
   return (
     <div className="sl-prose">
+      {showProgress && <ReadingProgressBar />}
       <article className="sl-article">
         <header className="sl-article-header">
           {/* Tag kicker above the title */}
