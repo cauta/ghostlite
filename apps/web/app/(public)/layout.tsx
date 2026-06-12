@@ -1,17 +1,18 @@
 import { loadTheme } from "@/themes/loader";
 import { getEnv } from "@/lib/cf";
-import { getThemeSettings, getSiteSettings, getInjectionSettings } from "@/lib/db";
+import { getThemeSettings, getSiteSettings, getInjectionSettings, getNavigation } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "edge";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const env = getEnv();
-  const [themeSettings, site, user, injection] = await Promise.all([
+  const [themeSettings, site, user, injection, navigation] = await Promise.all([
     getThemeSettings(env.DB),
     getSiteSettings(env.DB),
     getCurrentUser(),
     getInjectionSettings(env.DB),
+    getNavigation(env.DB),
   ]);
   const theme = await loadTheme(themeSettings.active);
 
@@ -23,6 +24,7 @@ export default async function PublicLayout({ children }: { children: React.React
     },
     theme: { config: themeSettings.config },
     user: user ? { name: user.name, role: user.role } : null,
+    navigation,
   };
 
   const head = (

@@ -6,10 +6,13 @@ const TOGGLE_SCRIPT = `(function(){try{var s=localStorage.getItem('gl-theme');va
 const SYSTEM_SCRIPT = `(function(){try{var t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
 const RESET_SCRIPT = `(function(){try{document.documentElement.removeAttribute('data-theme');}catch(e){}})();`;
 
-export default function Layout({ site, user, theme, children }: LayoutProps) {
+export default function Layout({ site, user, theme, navigation, children }: LayoutProps) {
   const darkMode = (theme.config.darkMode as string | undefined) ?? "toggle";
   const initScript =
     darkMode === "off" ? RESET_SCRIPT : darkMode === "system" ? SYSTEM_SCRIPT : TOGGLE_SCRIPT;
+  const primaryNav = navigation.primary.length > 0
+    ? navigation.primary
+    : [{ label: "Home", url: "/" }];
 
   return (
     <>
@@ -25,8 +28,9 @@ export default function Layout({ site, user, theme, children }: LayoutProps) {
               )}
             </Link>
             <nav className="theme-nav">
-              <Link href="/">Home</Link>
-              <Link href="/about">About</Link>
+              {primaryNav.map((item) => (
+                <Link key={item.url} href={item.url}>{item.label}</Link>
+              ))}
               {user ? (
                 <Link href="/admin" className="theme-dashboard-btn">
                   Go to Dashboard
@@ -41,6 +45,13 @@ export default function Layout({ site, user, theme, children }: LayoutProps) {
         </main>
         <footer className="theme-footer">
           <div className="theme-container">
+            {navigation.secondary.length > 0 ? (
+              <nav className="theme-footer-nav">
+                {navigation.secondary.map((item) => (
+                  <Link key={item.url} href={item.url}>{item.label}</Link>
+                ))}
+              </nav>
+            ) : null}
             <p>
               © {new Date().getFullYear()} {site.title}
               {site.description ? ` — ${site.description}` : ""}

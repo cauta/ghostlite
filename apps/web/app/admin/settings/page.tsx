@@ -22,6 +22,11 @@ export default async function SettingsHome() {
           desc="Choose the reading theme for your public blog."
         />
         <SectionCard
+          href="/admin/settings/navigation"
+          title="Navigation"
+          desc="Configure the header and footer links shown on your public site."
+        />
+        <SectionCard
           href="/admin/settings/email"
           title="Email"
           desc="Configure your email provider for invites, notifications, and password resets."

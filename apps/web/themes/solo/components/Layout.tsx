@@ -6,10 +6,13 @@ const TOGGLE_SCRIPT = `(function(){try{var s=localStorage.getItem('gl-theme');va
 const SYSTEM_SCRIPT = `(function(){try{var t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
 const RESET_SCRIPT = `(function(){try{document.documentElement.removeAttribute('data-theme');}catch(e){}})();`;
 
-export default function Layout({ site, user, theme, children }: LayoutProps) {
+export default function Layout({ site, user, theme, navigation, children }: LayoutProps) {
   const darkMode = (theme.config.darkMode as string | undefined) ?? "toggle";
   const initScript =
     darkMode === "off" ? RESET_SCRIPT : darkMode === "system" ? SYSTEM_SCRIPT : TOGGLE_SCRIPT;
+  const primaryNav = navigation.primary.length > 0
+    ? navigation.primary
+    : [{ label: "Posts", url: "/" }];
 
   return (
     <>
@@ -29,8 +32,9 @@ export default function Layout({ site, user, theme, children }: LayoutProps) {
 
               {/* Navigation */}
               <nav className="sl-nav" aria-label="Site navigation">
-                <Link href="/">Posts</Link>
-                <Link href="/about">About</Link>
+                {primaryNav.map((item) => (
+                  <Link key={item.url} href={item.url}>{item.label}</Link>
+                ))}
                 {user ? (
                   <Link href="/admin" className="sl-nav-cta">
                     Dashboard
@@ -56,6 +60,13 @@ export default function Layout({ site, user, theme, children }: LayoutProps) {
 
         <footer className="sl-footer">
           <div className="sl-outer">
+            {navigation.secondary.length > 0 ? (
+              <nav className="sl-footer-nav">
+                {navigation.secondary.map((item) => (
+                  <Link key={item.url} href={item.url}>{item.label}</Link>
+                ))}
+              </nav>
+            ) : null}
             <div className="sl-footer-inner">
               <span>© {new Date().getFullYear()} {site.title}</span>
               {site.description ? <span>{site.description}</span> : null}

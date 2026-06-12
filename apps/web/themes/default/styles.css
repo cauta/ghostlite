@@ -233,6 +233,21 @@ html[data-theme="dark"] .theme-icon-moon {
 .theme-footer p {
   margin: 0;
 }
+.theme-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 10px;
+}
+.theme-footer-nav a {
+  color: var(--t-fg-faint);
+  text-decoration: none;
+  font-size: 13.5px;
+  transition: color 0.15s var(--t-ease);
+}
+.theme-footer-nav a:hover {
+  color: var(--t-fg-muted);
+}
 
 /* ---------- Post list (home / tag) ---------- */
 .theme-post-list {

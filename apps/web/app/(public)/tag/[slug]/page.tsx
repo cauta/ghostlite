@@ -72,6 +72,7 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
     },
     theme: { config: {} },
     user: user ? { name: user.name, role: user.role } : null,
+    navigation: { primary: [], secondary: [] },
   };
 
   return <theme.pages.Tag {...ctx} tag={data.tag} posts={data.posts} />;

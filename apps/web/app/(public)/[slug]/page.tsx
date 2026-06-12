@@ -124,6 +124,7 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     },
     theme: { config: themeSettings.config },
     user: user ? { name: user.name, role: user.role } : null,
+    navigation: { primary: [], secondary: [] },
   };
 
   const origin = getOrigin();

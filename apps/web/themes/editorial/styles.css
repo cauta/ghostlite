@@ -188,6 +188,23 @@ html[data-theme="dark"] .ed-icon-moon { display: none; }
   margin: 0;
   letter-spacing: 0.04em;
 }
+.ed-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  margin-bottom: 10px;
+}
+.ed-footer-nav a {
+  color: var(--e-faint);
+  text-decoration: none;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  transition: color 0.15s ease;
+}
+.ed-footer-nav a:hover {
+  color: var(--e-muted);
+}
 
 /* shared kicker / eyebrow label */
 .ed-kicker {

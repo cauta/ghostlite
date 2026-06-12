@@ -23,6 +23,7 @@ export default async function NotFound() {
     },
     theme: { config: {} },
     user: user ? { name: user.name, role: user.role } : null,
+    navigation: { primary: [], secondary: [] },
   };
 
   if (theme.pages.NotFound) {

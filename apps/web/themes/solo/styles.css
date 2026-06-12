@@ -623,6 +623,22 @@ html[data-theme="dark"] .sl-icon-moon { display: none; }
   font-size: 13px;
   color: var(--sl-fg-faint);
 }
+.sl-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 10px;
+  font-family: var(--sl-sans);
+}
+.sl-footer-nav a {
+  color: var(--sl-fg-faint);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.15s ease;
+}
+.sl-footer-nav a:hover {
+  color: var(--sl-fg-muted);
+}
 
 /* ---------- Responsive ---------- */
 
