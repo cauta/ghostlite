@@ -28,13 +28,16 @@ export default function ThemeSettingsForm({
   const [selected, setSelected] = useState(active);
   const [savedTheme, setSavedTheme] = useState(active);
   const [progressBar, setProgressBar] = useState(config.progressBar !== false);
+  const [darkMode, setDarkMode] = useState((config.darkMode as string | undefined) ?? "toggle");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [premiumModal, setPremiumModal] = useState<ThemeManifest | null>(null);
 
   const selectedTheme = themes.find((t) => t.name === selected);
   const dirty = selected !== savedTheme && selectedTheme?.tier !== "premium";
-  const configDirty = progressBar !== (config.progressBar !== false);
+  const configDirty =
+    progressBar !== (config.progressBar !== false) ||
+    darkMode !== ((config.darkMode as string | undefined) ?? "toggle");
 
   useEffect(() => {
     if (msg?.kind !== "ok") return;
@@ -61,7 +64,7 @@ export default function ThemeSettingsForm({
           fetch("/api/settings/theme", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ config: { progressBar } }),
+            body: JSON.stringify({ config: { progressBar, darkMode } }),
           })
         );
       }
@@ -120,7 +123,22 @@ export default function ThemeSettingsForm({
       </div>
 
       <div style={{ marginTop: 24, borderTop: "1px solid var(--color-border)", paddingTop: 20 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Reading experience</h2>
+        <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Reading experience</h2>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontWeight: 500, marginBottom: 6 }}>
+            Dark mode
+          </label>
+          <select
+            className="admin-input"
+            value={darkMode}
+            onChange={(e) => setDarkMode(e.target.value)}
+            style={{ maxWidth: 280 }}
+          >
+            <option value="toggle">User toggle (show sun/moon button)</option>
+            <option value="system">Follow OS preference (no button)</option>
+            <option value="off">Always light (disabled)</option>
+          </select>
+        </div>
         <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
           <input
             type="checkbox"

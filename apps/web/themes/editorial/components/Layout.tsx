@@ -1,16 +1,19 @@
 import Link from "next/link";
 import type { LayoutProps } from "../../theme.types";
+import { ThemeToggle } from "../../shared/ThemeToggle";
 
-// The Default theme persists a light/dark choice on <html data-theme>.
-// Editorial is a single, light design, so on load we clear that attribute —
-// otherwise a reader arriving from the Default theme in dark mode would see
-// a dark page background behind Editorial's light layout.
-const RESET_THEME_SCRIPT = `(function(){try{document.documentElement.removeAttribute('data-theme');}catch(e){}})();`;
+const TOGGLE_SCRIPT = `(function(){try{var s=localStorage.getItem('gl-theme');var t=(s==='light'||s==='dark')?s:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
+const SYSTEM_SCRIPT = `(function(){try{var t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
+const RESET_SCRIPT = `(function(){try{document.documentElement.removeAttribute('data-theme');}catch(e){}})();`;
 
-export default function Layout({ site, user, children }: LayoutProps) {
+export default function Layout({ site, user, theme, children }: LayoutProps) {
+  const darkMode = (theme.config.darkMode as string | undefined) ?? "toggle";
+  const initScript =
+    darkMode === "off" ? RESET_SCRIPT : darkMode === "system" ? SYSTEM_SCRIPT : TOGGLE_SCRIPT;
+
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: RESET_THEME_SCRIPT }} />
+      <script dangerouslySetInnerHTML={{ __html: initScript }} />
       <div className="theme-editorial">
         <header className="ed-header">
           <div className="ed-container">
@@ -32,6 +35,15 @@ export default function Layout({ site, user, children }: LayoutProps) {
                   Dashboard
                 </Link>
               ) : null}
+              {darkMode === "toggle" && (
+                <ThemeToggle
+                  classes={{
+                    button: "ed-mode-toggle",
+                    moon: "ed-icon-moon",
+                    sun: "ed-icon-sun",
+                  }}
+                />
+              )}
             </nav>
           </div>
         </header>
