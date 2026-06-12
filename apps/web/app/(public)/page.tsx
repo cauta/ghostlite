@@ -67,6 +67,7 @@ export default async function Home({
     },
     theme: { config: {} },
     user: user ? { name: user.name, role: user.role } : null,
+    navigation: { primary: [], secondary: [] },
   };
 
   const origin = getOrigin();

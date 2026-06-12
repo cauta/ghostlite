@@ -39,10 +39,18 @@ export type AuthContext = {
   role: "admin" | "editor" | "author";
 } | null;
 
+export type NavItem = { label: string; url: string };
+
+export type NavigationContext = {
+  primary: NavItem[];
+  secondary: NavItem[];
+};
+
 export type ThemeContext = {
   site: SiteContext;
   theme: { config: Record<string, unknown> };
   user: AuthContext;
+  navigation: NavigationContext;
 };
 
 // ----- Page props -----

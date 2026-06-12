@@ -5,7 +5,7 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 import { loadTheme } from "@/themes/loader";
 import { getEnv, getOrigin } from "@/lib/cf";
 import {
-  getActiveThemeName,
+  getThemeSettings,
   getPublishedPostBySlug,
   getRelatedPosts,
   getSiteSettings,
@@ -86,14 +86,14 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
   const result = await getPublishedPostBySlugCached(env.DB, params.slug);
   if (!result) notFound();
 
-  const [themeName, site, body, user, relatedPosts] = await Promise.all([
-    getActiveThemeName(env.DB),
+  const [themeSettings, site, body, user, relatedPosts] = await Promise.all([
+    getThemeSettings(env.DB),
     getSiteSettingsCached(env.DB),
     readPostBody(env.R2, result.row.body_key),
     getCurrentUser(),
     result.row.type === 'post' ? getRelatedPosts(env.DB, result.row.id, 3) : Promise.resolve([]),
   ]);
-  const theme = await loadTheme(themeName);
+  const theme = await loadTheme(themeSettings.active);
 
   // Cache the body HTML in KV. Key includes published_at so an edit busts cache.
   const cacheKey = `post-html:${result.row.id}:${result.row.published_at}`;
@@ -122,8 +122,9 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
       description: site.description,
       logoUrl: site.logo_key ? `/api/media/${site.logo_key}` : null,
     },
-    theme: { config: {} },
+    theme: { config: themeSettings.config },
     user: user ? { name: user.name, role: user.role } : null,
+    navigation: { primary: [], secondary: [] },
   };
 
   const origin = getOrigin();

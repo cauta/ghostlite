@@ -64,6 +64,18 @@ export async function setInjectionSettings(db: D1Database, data: InjectionSettin
   await setSetting(db, "injection", data);
 }
 
+export type NavItem = { label: string; url: string };
+export type NavigationSettings = { primary: NavItem[]; secondary: NavItem[] };
+
+export async function getNavigation(db: D1Database): Promise<NavigationSettings> {
+  const n = await getSetting<NavigationSettings>(db, "navigation");
+  return { primary: n?.primary ?? [], secondary: n?.secondary ?? [] };
+}
+
+export async function setNavigation(db: D1Database, data: NavigationSettings): Promise<void> {
+  await setSetting(db, "navigation", data);
+}
+
 // ----- Posts (public) -----
 
 type PostRow = {
