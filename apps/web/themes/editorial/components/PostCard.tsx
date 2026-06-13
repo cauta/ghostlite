@@ -8,7 +8,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
     <article className="ed-card">
       <Link href={`/${post.slug}`} className="ed-card-media" aria-hidden tabIndex={-1}>
         {post.coverUrl ? (
-          <img src={post.coverUrl} alt="" className="ed-card-cover" loading="lazy" />
+          <img src={post.coverUrl} srcSet={post.coverSrcSet ?? undefined} sizes="(max-width: 640px) 100vw, 480px" alt="" className="ed-card-cover" loading="lazy" />
         ) : (
           <div className="ed-card-cover ed-cover-empty" />
         )}

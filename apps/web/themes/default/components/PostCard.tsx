@@ -14,7 +14,7 @@ export default function PostCard({ post }: { post: PostSummary }) {
     <article className="theme-post-card">
       {post.coverUrl ? (
         <Link href={`/${post.slug}`} className="theme-post-cover-link">
-          <img src={post.coverUrl} alt="" className="theme-post-cover" loading="lazy" />
+          <img src={post.coverUrl} srcSet={post.coverSrcSet ?? undefined} sizes="(max-width: 640px) 100vw, 480px" alt="" className="theme-post-cover" loading="lazy" />
         </Link>
       ) : null}
       <div className="theme-post-card-body">

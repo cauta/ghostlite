@@ -13,6 +13,7 @@ import {
 } from "@/lib/db";
 import { readPostBody } from "@/lib/storage";
 import { buildToc } from "@/lib/toc";
+import { rewriteBodyImages } from "@/lib/images";
 import { getCurrentUser } from "@/lib/auth";
 import { JsonLd } from "@/components/JsonLd";
 import { getCanonicalUrl } from "@/lib/seo";
@@ -116,7 +117,7 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     }
   }
 
-  const { html: bodyWithIds, toc } = buildToc(bodyHtml);
+  const { html: bodyWithIds, toc } = buildToc(rewriteBodyImages(bodyHtml));
   const post = rowToPostFull(result.row, bodyWithIds, result.tags);
   const ctx = {
     site: {

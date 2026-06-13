@@ -19,6 +19,8 @@ export type PostSummary = {
   title: string;
   excerpt: string | null;
   coverUrl: string | null;
+  /** Precomputed srcset string for responsive cover images. Null when no cover. */
+  coverSrcSet: string | null;
   publishedAt: number;
   author: { name: string; avatarUrl: string | null };
 };

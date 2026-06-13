@@ -73,7 +73,7 @@ export default function PostPage({ post, canonicalUrl, relatedPosts, theme, toc 
 
         {/* Cover image — rendered full-width above the body */}
         {post.coverUrl ? (
-          <img src={post.coverUrl} alt="" className="sl-cover" />
+          <img src={post.coverUrl} srcSet={post.coverSrcSet ?? undefined} sizes="(max-width: 640px) 100vw, 800px" alt="" className="sl-cover" />
         ) : null}
 
         {/* Post body HTML from the editor */}

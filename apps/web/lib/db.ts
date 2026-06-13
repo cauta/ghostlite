@@ -6,6 +6,7 @@
 
 import type { D1Database } from "@cloudflare/workers-types";
 import type { PostFull, PostSummary, Tag } from "@/themes/theme.types";
+import { buildSrcSet } from "@/lib/images";
 
 // ----- Settings -----
 
@@ -92,12 +93,14 @@ const PUBLIC_POST_COLUMNS = `
 `;
 
 function rowToSummary(r: PostRow): PostSummary {
+  const coverUrl = r.cover_key ? `/api/media/${r.cover_key}` : null;
   return {
     id: r.id,
     slug: r.slug,
     title: r.title,
     excerpt: r.excerpt,
-    coverUrl: r.cover_key ? `/api/media/${r.cover_key}` : null,
+    coverUrl,
+    coverSrcSet: coverUrl ? buildSrcSet(coverUrl) : null,
     publishedAt: r.published_at,
     author: {
       name: r.author_name,

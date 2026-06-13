@@ -8,7 +8,7 @@ export default function FeaturePost({ post }: { post: PostSummary }) {
     <article className="ed-feature">
       <Link href={`/${post.slug}`} className="ed-feature-media" aria-hidden tabIndex={-1}>
         {post.coverUrl ? (
-          <img src={post.coverUrl} alt="" className="ed-feature-cover" />
+          <img src={post.coverUrl} srcSet={post.coverSrcSet ?? undefined} sizes="(max-width: 640px) 100vw, 1120px" alt="" className="ed-feature-cover" />
         ) : (
           <div className="ed-feature-cover ed-cover-empty" />
         )}

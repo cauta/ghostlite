@@ -38,7 +38,7 @@ export default function PostPage({ post, canonicalUrl, relatedPosts, theme, toc 
             </div>
           ) : null}
           {post.coverUrl ? (
-            <img src={post.coverUrl} alt="" className="theme-post-cover-full" />
+            <img src={post.coverUrl} srcSet={post.coverSrcSet ?? undefined} sizes="(max-width: 640px) 100vw, 800px" alt="" className="theme-post-cover-full" />
           ) : null}
         </header>
         <TableOfContents

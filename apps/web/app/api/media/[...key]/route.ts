@@ -3,9 +3,25 @@ import { getEnv } from "@/lib/cf";
 
 export const runtime = "edge";
 
-export async function GET(_req: NextRequest, { params }: { params: { key: string[] } }) {
+export async function GET(req: NextRequest, { params }: { params: { key: string[] } }) {
   const env = getEnv();
   const key = params.key.join("/");
+
+  // On Cloudflare (detected via the CF-Ray header that CF injects on all
+  // requests), redirect resize requests to Cloudflare Image Resizing so we
+  // get format=auto + quality compression for free. In local dev, serve the
+  // original and ignore resize params.
+  const reqUrl = new URL(req.url);
+  const w = reqUrl.searchParams.get("w");
+  const q = reqUrl.searchParams.get("q") ?? "85";
+  if (w && req.headers.get("cf-ray")) {
+    const origin = `${reqUrl.protocol}//${reqUrl.host}`;
+    const source = `${origin}/api/media/${key}`;
+    return Response.redirect(
+      `/cdn-cgi/image/width=${w},quality=${q},format=auto/${source}`,
+      302,
+    );
+  }
   const obj = await env.R2.get(key);
   if (!obj) return new Response("Not found", { status: 404 });
 
