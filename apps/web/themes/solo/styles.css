@@ -42,6 +42,24 @@
   flex-direction: column;
 }
 
+/* ---------- Design tokens (dark) ---------- */
+html[data-theme="dark"] {
+  background-color: #0f0f11;
+}
+html[data-theme="dark"] .theme-solo {
+  --sl-bg:        #0f0f11;
+  --sl-surface:   #181820;
+  --sl-fg:        #e8e8ea;
+  --sl-fg-muted:  #a0a0aa;
+  --sl-fg-faint:  #6a6a75;
+  --sl-border:    #252530;
+  --sl-accent:    #818cf8;
+  --sl-accent-hv: #a5b4fc;
+  --sl-tag-bg:    #1e1b4b;
+  --sl-tag-fg:    #a5b4fc;
+  --sl-code-bg:   #1a1a22;
+}
+
 .theme-solo *,
 .theme-solo *::before,
 .theme-solo *::after {
@@ -151,6 +169,29 @@
   background: var(--sl-accent-hv) !important;
   text-decoration: none;
 }
+.sl-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  background: var(--sl-surface);
+  color: var(--sl-fg-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.sl-mode-toggle:hover {
+  color: var(--sl-fg);
+  border-color: var(--sl-accent);
+}
+.sl-mode-toggle svg { width: 16px; height: 16px; }
+.sl-icon-sun { display: none; }
+.sl-icon-moon { display: block; }
+html[data-theme="dark"] .sl-icon-sun { display: block; }
+html[data-theme="dark"] .sl-icon-moon { display: none; }
 
 /* ---------- Main ---------- */
 

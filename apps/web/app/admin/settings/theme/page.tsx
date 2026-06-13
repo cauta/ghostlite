@@ -13,5 +13,5 @@ export default async function ThemeSettingsPage() {
     listThemeManifests(),
     getThemeSettings(env.DB),
   ]);
-  return <ThemeSettingsForm themes={themes} active={settings.active} />;
+  return <ThemeSettingsForm themes={themes} active={settings.active} config={settings.config} />;
 }
