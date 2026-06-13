@@ -16,6 +16,7 @@
   --sl-border:    #e5e5e5;
   --sl-accent:    #4f46e5;
   --sl-accent-hv: #3730a3;
+  --color-accent: var(--sl-accent);
   --sl-tag-bg:    #ede9fe;
   --sl-tag-fg:    #4338ca;
   --sl-code-bg:   #f3f3f3;

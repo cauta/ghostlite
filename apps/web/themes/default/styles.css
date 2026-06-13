@@ -19,6 +19,7 @@
   --t-accent: #0f6e56;
   --t-accent-hover: #0a5642;
   --t-accent-soft: #e7f2ee;
+  --color-accent: var(--t-accent);
   --t-code-bg: #f4f5f6;
   --t-selection: #c9e7dd;
 
