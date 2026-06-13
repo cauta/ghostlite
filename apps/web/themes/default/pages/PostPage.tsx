@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { ShareBar } from "../../shared/ShareBar";
 import { ReadingProgressBar } from "../../shared/ReadingProgressBar";
+import { TableOfContents } from "../../shared/TableOfContents";
 import PostCard from "../components/PostCard";
 
 function fmtDate(unix: number) {
@@ -12,7 +13,7 @@ function fmtDate(unix: number) {
   });
 }
 
-export default function PostPage({ post, canonicalUrl, relatedPosts, theme }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts, theme, toc }: PostPageProps) {
   const showProgress = theme.config.progressBar !== false;
   return (
     <>
@@ -40,6 +41,15 @@ export default function PostPage({ post, canonicalUrl, relatedPosts, theme }: Po
             <img src={post.coverUrl} alt="" className="theme-post-cover-full" />
           ) : null}
         </header>
+        <TableOfContents
+          toc={toc}
+          className="theme-toc"
+          headingClassName="theme-toc-heading"
+          listClassName="theme-toc-list"
+          itemClassName="theme-toc-item"
+          linkClassName="theme-toc-link"
+          subLinkClassName="theme-toc-link theme-toc-link--sub"
+        />
         <div
           className="theme-post-body"
           dangerouslySetInnerHTML={{ __html: post.bodyHtml }}

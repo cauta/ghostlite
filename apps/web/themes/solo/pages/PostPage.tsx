@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { PostPageProps } from "../../theme.types";
 import { ShareBar } from "../../shared/ShareBar";
 import { ReadingProgressBar } from "../../shared/ReadingProgressBar";
+import { TableOfContents } from "../../shared/TableOfContents";
 import PostListItem from "../components/PostListItem";
 
 // Formats a Unix epoch (seconds) into a human-readable date string.
@@ -27,7 +28,7 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export default function PostPage({ post, canonicalUrl, relatedPosts, theme }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts, theme, toc }: PostPageProps) {
   const primaryTag = post.tags[0] ?? null;
   const showProgress = theme.config.progressBar !== false;
 
@@ -76,6 +77,15 @@ export default function PostPage({ post, canonicalUrl, relatedPosts, theme }: Po
         ) : null}
 
         {/* Post body HTML from the editor */}
+        <TableOfContents
+          toc={toc}
+          className="sl-toc"
+          headingClassName="sl-toc-heading"
+          listClassName="sl-toc-list"
+          itemClassName="sl-toc-item"
+          linkClassName="sl-toc-link"
+          subLinkClassName="sl-toc-link sl-toc-link--sub"
+        />
         <div
           className="sl-body"
           dangerouslySetInnerHTML={{ __html: post.bodyHtml }}

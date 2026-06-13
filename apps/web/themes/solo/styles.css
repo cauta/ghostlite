@@ -360,6 +360,50 @@
   display: block;
 }
 
+/* ---------- Table of contents ---------- */
+
+.sl-toc {
+  border: 1px solid var(--sl-border);
+  border-radius: 6px;
+  padding: 18px 22px;
+  margin: 28px 0;
+}
+.sl-toc-heading {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sl-fg-muted);
+  margin: 0 0 10px;
+}
+.sl-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sl-toc-item {
+  margin: 0;
+  padding: 0;
+}
+.sl-toc-link {
+  color: var(--sl-fg);
+  text-decoration: none;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.sl-toc-link:hover {
+  color: var(--sl-accent);
+  text-decoration: underline;
+}
+.sl-toc-link--sub {
+  padding-left: 16px;
+  color: var(--sl-fg-muted);
+  font-size: 14px;
+}
+
 /* ---------- Prose body ---------- */
 
 .sl-body {

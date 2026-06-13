@@ -398,6 +398,50 @@ html[data-theme="dark"] .theme-icon-moon {
   display: block;
 }
 
+/* Table of contents */
+.theme-toc {
+  border: 1px solid var(--t-border);
+  border-radius: var(--t-radius);
+  background: var(--t-bg-subtle);
+  padding: 20px 24px;
+  margin: 28px 0;
+}
+.theme-toc-heading {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--t-fg-muted);
+  margin: 0 0 12px;
+}
+.theme-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.theme-toc-item {
+  margin: 0;
+  padding: 0;
+}
+.theme-toc-link {
+  color: var(--t-fg);
+  text-decoration: none;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.theme-toc-link:hover {
+  color: var(--t-accent);
+  text-decoration: underline;
+}
+.theme-toc-link--sub {
+  padding-left: 16px;
+  color: var(--t-fg-muted);
+  font-size: 14px;
+}
+
 /* Post body (rendered Markdown) */
 .theme-post-body {
   font-size: 18px;

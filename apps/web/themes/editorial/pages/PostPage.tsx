@@ -3,9 +3,10 @@ import type { PostPageProps } from "../../theme.types";
 import { formatDate, isoDate } from "../format";
 import { ShareBar } from "../../shared/ShareBar";
 import { ReadingProgressBar } from "../../shared/ReadingProgressBar";
+import { TableOfContents } from "../../shared/TableOfContents";
 import PostCard from "../components/PostCard";
 
-export default function PostPage({ post, canonicalUrl, relatedPosts, theme }: PostPageProps) {
+export default function PostPage({ post, canonicalUrl, relatedPosts, theme, toc }: PostPageProps) {
   const showProgress = theme.config.progressBar !== false;
   const primaryTag = post.tags[0] ?? null;
 
@@ -32,6 +33,15 @@ export default function PostPage({ post, canonicalUrl, relatedPosts, theme }: Po
           <img src={post.coverUrl} alt="" className="ed-post-cover" />
         ) : null}
 
+        <TableOfContents
+          toc={toc}
+          className="ed-toc"
+          headingClassName="ed-toc-heading"
+          listClassName="ed-toc-list"
+          itemClassName="ed-toc-item"
+          linkClassName="ed-toc-link"
+          subLinkClassName="ed-toc-link ed-toc-link--sub"
+        />
         <div className="ed-post-body" dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
 
         {post.tags.length > 0 ? (
