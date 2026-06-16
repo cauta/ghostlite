@@ -535,3 +535,34 @@ export async function getAllTagsWithPublishedPosts(db: D1Database): Promise<stri
     .all<{ slug: string }>();
   return ((res.results as { slug: string }[]) ?? []).map((r) => r.slug);
 }
+
+export type SearchResult = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  publishedAt: number;
+};
+
+/** Full-text search over published post titles and excerpts via FTS5. */
+export async function searchPosts(
+  db: D1Database,
+  query: string,
+  limit = 10,
+): Promise<SearchResult[]> {
+  const res = await db
+    .prepare(
+      `SELECT p.id, p.slug, p.title, p.excerpt, p.published_at AS publishedAt
+       FROM posts_fts f
+       JOIN posts p ON p.id = f.post_id
+       WHERE posts_fts MATCH ?
+         AND p.status = 'published'
+         AND p.published_at <= unixepoch()
+         AND p.type = 'post'
+       ORDER BY rank
+       LIMIT ?`,
+    )
+    .bind(query + "*", limit)
+    .all<SearchResult>();
+  return (res.results as SearchResult[]) ?? [];
+}

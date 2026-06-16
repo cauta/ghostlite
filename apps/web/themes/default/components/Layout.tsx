@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { LayoutProps } from "../../theme.types";
 import ThemeToggle from "./ThemeToggle";
+import SearchModal from "./SearchModal";
 
 const TOGGLE_SCRIPT = `(function(){try{var s=localStorage.getItem('gl-theme');var t=(s==='light'||s==='dark')?s:(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
 const SYSTEM_SCRIPT = `(function(){try{var t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
@@ -32,6 +33,7 @@ export default function Layout({ site, user, theme, children }: LayoutProps) {
                   Go to Dashboard
                 </Link>
               ) : null}
+              <SearchModal />
               {darkMode === "toggle" && <ThemeToggle />}
             </nav>
           </div>
