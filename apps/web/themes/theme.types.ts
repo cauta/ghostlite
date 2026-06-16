@@ -11,6 +11,8 @@ import type { ComponentType, ReactNode } from "react";
 
 export type Tag = { slug: string; name: string };
 
+export type TocEntry = { id: string; text: string; level: 2 | 3 };
+
 export type PostSummary = {
   id: string;
   slug: string;
@@ -61,6 +63,8 @@ export type PostPageProps = ThemeContext & {
   canonicalUrl: string;
   /** Up to 3 posts sharing tags with the current post. Empty array when none exist. */
   relatedPosts: PostSummary[];
+  /** Table of contents entries derived from h2/h3 headings in the post body. */
+  toc: TocEntry[];
 };
 
 export type TagPageProps = ThemeContext & {

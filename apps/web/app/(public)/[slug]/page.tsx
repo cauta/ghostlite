@@ -12,6 +12,7 @@ import {
   rowToPostFull,
 } from "@/lib/db";
 import { readPostBody } from "@/lib/storage";
+import { buildToc } from "@/lib/toc";
 import { getCurrentUser } from "@/lib/auth";
 import { JsonLd } from "@/components/JsonLd";
 import { getCanonicalUrl } from "@/lib/seo";
@@ -115,7 +116,8 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     }
   }
 
-  const post = rowToPostFull(result.row, bodyHtml, result.tags);
+  const { html: bodyWithIds, toc } = buildToc(bodyHtml);
+  const post = rowToPostFull(result.row, bodyWithIds, result.tags);
   const ctx = {
     site: {
       title: site.title,
@@ -165,7 +167,7 @@ export default async function PostBySlug({ params }: { params: { slug: string } 
     <>
       <JsonLd data={articleSchema} />
       <JsonLd data={breadcrumbSchema} />
-      <theme.pages.Post {...ctx} post={post} pageType={result.row.type} canonicalUrl={postUrl} relatedPosts={relatedPosts} />
+      <theme.pages.Post {...ctx} post={post} pageType={result.row.type} canonicalUrl={postUrl} relatedPosts={relatedPosts} toc={toc} />
     </>
   );
 }
