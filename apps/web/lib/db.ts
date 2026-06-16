@@ -200,27 +200,44 @@ export async function getRelatedPosts(
 export async function listPostsByTag(
   db: D1Database,
   tagSlug: string,
-): Promise<{ tag: Tag; posts: PostSummary[] } | null> {
+  opts: { page?: number; perPage?: number } = {},
+): Promise<{ tag: Tag; posts: PostSummary[]; page: number; totalPages: number } | null> {
   const tag = await db
     .prepare("SELECT slug, name FROM tags WHERE slug = ?")
     .bind(tagSlug)
     .first<Tag>();
   if (!tag) return null;
 
-  const res = await db
-    .prepare(
-      `SELECT ${PUBLIC_POST_COLUMNS}
-       FROM posts p
-       JOIN users u ON u.id = p.author_id
-       JOIN post_tags pt ON pt.post_id = p.id
-       JOIN tags t ON t.id = pt.tag_id
-       WHERE t.slug = ? AND p.status = 'published' AND p.published_at <= unixepoch() AND p.type = 'post'
-       ORDER BY p.published_at DESC
-       LIMIT 50`,
-    )
-    .bind(tagSlug)
-    .all<PostRow>();
-  return { tag, posts: ((res.results as PostRow[]) ?? []).map(rowToSummary) };
+  const page = Math.max(1, opts.page ?? 1);
+  const perPage = Math.max(1, Math.min(50, opts.perPage ?? 15));
+  const offset = (page - 1) * perPage;
+
+  const [postsRes, countRes] = await db.batch([
+    db
+      .prepare(
+        `SELECT ${PUBLIC_POST_COLUMNS}
+         FROM posts p
+         JOIN users u ON u.id = p.author_id
+         JOIN post_tags pt ON pt.post_id = p.id
+         JOIN tags t ON t.id = pt.tag_id
+         WHERE t.slug = ? AND p.status = 'published' AND p.published_at <= unixepoch() AND p.type = 'post'
+         ORDER BY p.published_at DESC
+         LIMIT ? OFFSET ?`,
+      )
+      .bind(tagSlug, perPage, offset),
+    db
+      .prepare(
+        `SELECT COUNT(*) as c FROM posts p
+         JOIN post_tags pt ON pt.post_id = p.id
+         JOIN tags t ON t.id = pt.tag_id
+         WHERE t.slug = ? AND p.status = 'published' AND p.published_at <= unixepoch() AND p.type = 'post'`,
+      )
+      .bind(tagSlug),
+  ]);
+
+  const posts = ((postsRes.results as PostRow[]) ?? []).map(rowToSummary);
+  const total = ((countRes.results as unknown as { c: number }[])[0]?.c) ?? 0;
+  return { tag, posts, page, totalPages: Math.max(1, Math.ceil(total / perPage)) };
 }
 
 // ----- RSS feed -----

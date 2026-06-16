@@ -70,6 +70,8 @@ export type PostPageProps = ThemeContext & {
 export type TagPageProps = ThemeContext & {
   tag: Tag;
   posts: PostSummary[];
+  page: number;
+  totalPages: number;
 };
 
 export type LayoutProps = ThemeContext & { children: ReactNode };
