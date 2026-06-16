@@ -17,6 +17,7 @@
   --e-line-strong: #d6ccb6;
   --e-accent: #9a3412;
   --e-accent-deep: #7c2d12;
+  --color-accent: var(--e-accent);
 
   /* type */
   --e-serif: Georgia, "Iowan Old Style", "Times New Roman", Times, serif;
