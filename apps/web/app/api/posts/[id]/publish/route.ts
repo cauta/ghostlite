@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { purgeRelatedCache } from "@/lib/cache";
 import { getEnv } from "@/lib/cf";
 import { getPostById, updatePost } from "@/lib/db";
 
@@ -21,10 +22,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     scheduledAt: null,
   });
 
-  // Bust the sitemap KV cache so the new post appears immediately
-  env.KV.delete("sitemap-xml").catch(() => {});
-  // Bust RSS feed cache so the new post appears immediately
-  env.KV.delete("rss:feed").catch(() => {});
+  await purgeRelatedCache(env.KV, params.id);
 
   return NextResponse.json({ ok: true });
 }
