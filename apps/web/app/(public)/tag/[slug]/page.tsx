@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { loadTheme } from "@/themes/loader";
@@ -9,18 +8,18 @@ import { getCanonicalUrl } from "@/lib/seo";
 
 export const runtime = "edge";
 
-const getSiteSettingsCached = cache(getSiteSettings);
-const listPostsByTagCached = cache(listPostsByTag);
-
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: { slug: string };
+  searchParams: { page?: string };
 }): Promise<Metadata> {
   const env = getEnv();
+  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
   const [data, site] = await Promise.all([
-    listPostsByTagCached(env.DB, params.slug),
-    getSiteSettingsCached(env.DB),
+    listPostsByTag(env.DB, params.slug, { page }),
+    getSiteSettings(env.DB),
   ]);
   if (!data) return {};
 
@@ -28,13 +27,15 @@ export async function generateMetadata({
   const logoUrl = site.logo_key ? `${origin}/api/media/${site.logo_key}` : undefined;
   const tagTitle = `${data.tag.name} — ${site.title}`;
   const description = `Posts tagged "${data.tag.name}" on ${site.title}`;
+  const canonical =
+    page === 1
+      ? getCanonicalUrl(origin, `/tag/${data.tag.slug}/`)
+      : getCanonicalUrl(origin, `/tag/${data.tag.slug}/?page=${page}`);
 
   return {
     title: tagTitle,
     description,
-    alternates: {
-      canonical: getCanonicalUrl(origin, `/tag/${data.tag.slug}/`),
-    },
+    alternates: { canonical },
     openGraph: {
       type: "website",
       title: tagTitle,
@@ -52,14 +53,21 @@ export async function generateMetadata({
   };
 }
 
-export default async function TagPage({ params }: { params: { slug: string } }) {
+export default async function TagPage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams: { page?: string };
+}) {
   const env = getEnv();
-  const data = await listPostsByTagCached(env.DB, params.slug);
+  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  const data = await listPostsByTag(env.DB, params.slug, { page });
   if (!data) notFound();
 
   const [themeName, site, user] = await Promise.all([
     getActiveThemeName(env.DB),
-    getSiteSettingsCached(env.DB),
+    getSiteSettings(env.DB),
     getCurrentUser(),
   ]);
   const theme = await loadTheme(themeName);
@@ -74,5 +82,13 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
     user: user ? { name: user.name, role: user.role } : null,
   };
 
-  return <theme.pages.Tag {...ctx} tag={data.tag} posts={data.posts} />;
+  return (
+    <theme.pages.Tag
+      {...ctx}
+      tag={data.tag}
+      posts={data.posts}
+      page={data.page}
+      totalPages={data.totalPages}
+    />
+  );
 }

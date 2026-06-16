@@ -1,7 +1,8 @@
+import Link from "next/link";
 import type { TagPageProps } from "../../theme.types";
 import PostCard from "../components/PostCard";
 
-export default function TagPage({ tag, posts }: TagPageProps) {
+export default function TagPage({ tag, posts, page, totalPages }: TagPageProps) {
   return (
     <div className="theme-tag-page">
       <header className="theme-tag-header">
@@ -16,6 +17,27 @@ export default function TagPage({ tag, posts }: TagPageProps) {
           ))}
         </div>
       )}
+      {totalPages > 1 ? (
+        <nav className="theme-pagination">
+          {page > 1 ? (
+            <Link
+              href={page === 2 ? `/tag/${tag.slug}/` : `/tag/${tag.slug}/?page=${page - 1}`}
+            >
+              ← Newer
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="theme-page-indicator">
+            Page {page} of {totalPages}
+          </span>
+          {page < totalPages ? (
+            <Link href={`/tag/${tag.slug}/?page=${page + 1}`}>Older →</Link>
+          ) : (
+            <span />
+          )}
+        </nav>
+      ) : null}
     </div>
   );
 }
