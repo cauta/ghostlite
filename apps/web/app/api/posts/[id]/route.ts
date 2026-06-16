@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+import { purgeRelatedCache } from "@/lib/cache";
 import { getEnv } from "@/lib/cf";
 import { deletePost, getPostById, setPostTags, updatePost } from "@/lib/db";
 import { deleteObject, writePostBody } from "@/lib/storage";
@@ -82,11 +83,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   if (post.status === "published") {
-    await invalidatePostCache(env.KV, params.id);
-    // Also bust the sitemap cache (slug may have changed)
-    env.KV.delete("sitemap-xml").catch(() => {});
-    // Also bust the RSS feed cache so edits are reflected
-    env.KV.delete("rss:feed").catch(() => {});
+    await purgeRelatedCache(env.KV, params.id);
   }
 
   return NextResponse.json({ ok: true });
@@ -104,15 +101,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
 
   await deleteObject(env.R2, post.body_key).catch(() => {});
   await deletePost(env.DB, params.id);
-  await invalidatePostCache(env.KV, params.id);
+  await purgeRelatedCache(env.KV, params.id);
 
   return NextResponse.json({ ok: true });
-}
-
-async function invalidatePostCache(
-  kv: import("@cloudflare/workers-types").KVNamespace,
-  postId: string,
-) {
-  const list = await kv.list({ prefix: `post-html:${postId}:` });
-  await Promise.all(list.keys.map((k) => kv.delete(k.name))).catch(() => {});
 }
